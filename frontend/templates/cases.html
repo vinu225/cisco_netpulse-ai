@@ -1,0 +1,276 @@
+{% extends "base.html" %}
+
+{% block title %}Fault Category Matrix - NetPulse AI{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col-md-8">
+        <h1 class="h3 fw-bold text-white mb-1">
+            <i class="bi bi-diagram-3 text-cyan me-2"></i>Known Fault Categories Matrix
+        </h1>
+        <p class="text-muted mb-0">Browse, filter, and inspect all 30 pre-configured Cisco Packet Tracer fault scenarios.</p>
+    </div>
+</div>
+
+<!-- Search and Filter Toolbar -->
+<div class="cyber-card p-3 mb-4">
+    <div class="row g-3">
+        <div class="col-md-5">
+            <div class="input-group">
+                <span class="input-group-text bg-transparent border-0 text-muted"><i class="bi bi-search"></i></span>
+                <input type="text" class="form-control form-control-cyber ps-0 border-0" id="search-input" placeholder="Search by fault title, concept keyword, or Case ID...">
+            </div>
+        </div>
+        <div class="col-md-3">
+            <select class="form-select form-select-cyber" id="concept-filter">
+                <option value="">All Technical Concepts</option>
+                <option value="IP Addressing">IP Addressing</option>
+                <option value="Subnet Mask">Subnet Mask</option>
+                <option value="Default Gateway">Default Gateway</option>
+                <option value="Interface Status">Interface Status</option>
+                <option value="VLAN">VLAN</option>
+                <option value="VLAN Trunking">VLAN Trunking</option>
+                <option value="Inter-VLAN Routing">Inter-VLAN Routing</option>
+                <option value="DHCP">DHCP</option>
+                <option value="Routing">Routing</option>
+                <option value="Static Routing">Static Routing</option>
+                <option value="Router Interface">Router Interface</option>
+                <option value="DNS">DNS</option>
+                <option value="ACL">ACL</option>
+                <option value="NAT">NAT</option>
+                <option value="Wireless Networking">Wireless Networking</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select class="form-select form-select-cyber" id="severity-filter">
+                <option value="">All Severities</option>
+                <option value="High">High</option>
+                <option value="Medium">Medium</option>
+                <option value="Low">Low</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="button" class="btn btn-cyber-outline w-100" onclick="clearFilters()">
+                <i class="bi bi-x-circle me-1"></i> Reset Filters
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Cases Table -->
+<div class="cyber-card">
+    <div class="cyber-card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-cyber" id="cases-table">
+                <thead>
+                    <tr>
+                        <th style="width: 80px;">Case ID</th>
+                        <th>Fault Scenario Title</th>
+                        <th>Core Concept</th>
+                        <th style="width: 120px;">Severity</th>
+                        <th style="width: 120px;">OSI Layer</th>
+                        <th style="width: 160px; text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for case in cases %}
+                    <tr data-concept="{{ case.concept }}" data-severity="{{ case.severity }}" data-id="{{ case.case_id }}" data-title="{{ case.title }}">
+                        <td class="fw-bold text-cyan font-monospace">#{{ case.case_id }}</td>
+                        <td class="fw-semibold text-white">{{ case.title }}</td>
+                        <td class="text-muted small"><span class="badge bg-secondary bg-opacity-20 text-light">{{ case.concept }}</span></td>
+                        <td>
+                            {% if case.severity == 'High' %}
+                            <span class="badge badge-cyber badge-high">High</span>
+                            {% elif case.severity == 'Medium' %}
+                            <span class="badge badge-cyber badge-medium">Medium</span>
+                            {% else %}
+                            <span class="badge badge-cyber badge-low">{{ case.severity }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="font-monospace small text-muted">{{ case.osi_layer }}</td>
+                        <td class="text-end">
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button type="button" class="btn btn-cyber-outline" onclick="viewCase({{ case.case_id }})" title="Inspect Topology & Output">
+                                    <i class="bi bi-eye"></i> View
+                                </button>
+                                <button type="button" class="btn btn-cyber-primary" onclick="diagnoseCase({{ case.case_id }})" title="Run AI Diagnosis">
+                                    <i class="bi bi-play-fill"></i> Run
+                                </button>
+                                <button type="button" class="btn btn-cyber-outline" onclick="runRuleCheck({{ case.case_id }})" title="Execute Rule Checker">
+                                    <i class="bi bi-shield-check"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Case Detail -->
+<div class="modal fade" id="caseModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content cyber-card" style="border: 1px solid var(--border-color);">
+            <div class="modal-header border-secondary border-opacity-25">
+                <h5 class="modal-title text-white fw-bold" id="caseModalTitle">Case Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-light" id="caseModalBody">
+                <!-- Loaded via AJAX -->
+            </div>
+            <div class="modal-footer border-secondary border-opacity-25">
+                <button type="button" class="btn btn-cyber-outline" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-cyber-primary" id="modal-diagnose-btn">Diagnose This Scenario</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Rule Checker -->
+<div class="modal fade" id="ruleCheckModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content cyber-card" style="border: 1px solid var(--border-color);">
+            <div class="modal-header border-secondary border-opacity-25">
+                <h5 class="modal-title text-white fw-bold"><i class="bi bi-shield-check text-warning me-2"></i>Rule Checker Results</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-light" id="ruleCheckModalBody">
+                <!-- Loaded via AJAX -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let allCases = [];
+
+document.addEventListener('DOMContentLoaded', () => {
+    allCases = Array.from(document.querySelectorAll('#cases-table tbody tr')).map(row => ({
+        id: row.dataset.id,
+        title: row.dataset.title,
+        concept: row.dataset.concept,
+        severity: row.dataset.severity,
+        element: row
+    }));
+    
+    document.getElementById('search-input').addEventListener('input', filterCases);
+    document.getElementById('concept-filter').addEventListener('change', filterCases);
+    document.getElementById('severity-filter').addEventListener('change', filterCases);
+});
+
+function filterCases() {
+    const search = document.getElementById('search-input').value.toLowerCase();
+    const concept = document.getElementById('concept-filter').value;
+    const severity = document.getElementById('severity-filter').value;
+    
+    allCases.forEach(item => {
+        const matchesSearch = item.title.toLowerCase().includes(search) || 
+                             item.id.includes(search) ||
+                             item.concept.toLowerCase().includes(search);
+        const matchesConcept = !concept || item.concept === concept;
+        const matchesSeverity = !severity || item.severity === severity;
+        
+        item.element.style.display = (matchesSearch && matchesConcept && matchesSeverity) ? '' : 'none';
+    });
+}
+
+function clearFilters() {
+    document.getElementById('search-input').value = '';
+    document.getElementById('concept-filter').value = '';
+    document.getElementById('severity-filter').value = '';
+    filterCases();
+}
+
+async function viewCase(caseId) {
+    const modal = new bootstrap.Modal(document.getElementById('caseModal'));
+    document.getElementById('caseModalTitle').textContent = 'Loading Case...';
+    document.getElementById('caseModalBody').innerHTML = '<div class="text-center py-4"><div class="spinner-border text-cyan"></div></div>';
+    modal.show();
+    
+    try {
+        const response = await fetch('/api/cases/' + caseId);
+        const data = await response.json();
+        
+        if (data.case) {
+            document.getElementById('caseModalTitle').textContent = 'Case #' + data.case.case_id + ': ' + data.case.title;
+            
+            let evidenceHtml = '';
+            if (data.evidence) {
+                Object.entries(data.evidence).forEach(([key, value]) => {
+                    if (value && value.trim()) {
+                        const titleKey = key.replace(/_/g, ' ').toUpperCase();
+                        evidenceHtml += '<div class="mb-3"><h6 class="text-cyan small font-monospace">' + titleKey + '</h6><pre class="code-console" style="max-height: 180px; overflow: auto;">' + NetSage.escapeHtml(value) + '</pre></div>';
+                    }
+                });
+            }
+            
+            const badgeClass = data.case.severity === 'High' ? 'badge-high' : data.case.severity === 'Medium' ? 'badge-medium' : 'badge-low';
+            
+            let bodyContent = '<div class="row g-3 mb-4">' +
+                '<div class="col-md-6"><span class="text-muted small">Concept:</span> <div class="fw-bold text-white">' + NetSage.escapeHtml(data.case.concept) + '</div></div>' +
+                '<div class="col-md-6"><span class="text-muted small">Severity:</span> <div><span class="badge badge-cyber ' + badgeClass + '">' + data.case.severity + '</span></div></div>' +
+                '<div class="col-md-6"><span class="text-muted small">OSI Layer:</span> <div class="fw-bold font-monospace text-cyan">' + NetSage.escapeHtml(data.case.osi_layer) + '</div></div>' +
+                '<div class="col-md-6"><span class="text-muted small">Expected Fault:</span> <div class="fw-bold text-warning">' + NetSage.escapeHtml(data.case.expected_fault) + '</div></div>' +
+                '</div>' +
+                '<hr class="border-secondary border-opacity-25">' +
+                '<h6 class="text-white fw-bold">Topology Overview</h6><p class="small text-muted">' + NetSage.escapeHtml(data.case.topology) + '</p>' +
+                '<h6 class="text-white fw-bold">Symptom Description</h6><p class="small text-muted">' + NetSage.escapeHtml(data.case.symptom) + '</p>' +
+                '<h6 class="text-white fw-bold">Topology Notes</h6><p class="small text-muted">' + NetSage.escapeHtml(data.case.topology_note) + '</p>';
+            
+            if (evidenceHtml) {
+                bodyContent += '<hr class="border-secondary border-opacity-25"><h6 class="text-white fw-bold mb-3">Pre-Configured Evidence Logs</h6>' + evidenceHtml;
+            }
+            
+            document.getElementById('caseModalBody').innerHTML = bodyContent;
+            
+            document.getElementById('modal-diagnose-btn').onclick = () => {
+                modal.hide();
+                window.location.href = '/diagnose?case=' + caseId;
+            };
+        }
+    } catch (error) {
+        document.getElementById('caseModalBody').innerHTML = '<div class="alert bg-danger bg-opacity-20 text-danger border-0">Failed to load case: ' + error.message + '</div>';
+    }
+}
+
+async function diagnoseCase(caseId) {
+    window.location.href = '/diagnose?case=' + caseId;
+}
+
+async function runRuleCheck(caseId) {
+    const modal = new bootstrap.Modal(document.getElementById('ruleCheckModal'));
+    document.getElementById('ruleCheckModalBody').innerHTML = '<div class="text-center py-4"><div class="spinner-border text-warning"></div></div>';
+    modal.show();
+    
+    try {
+        const response = await fetch('/api/rule-check', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: 'case_id=' + caseId
+        });
+        const data = await response.json();
+        
+        if (data.results && data.results.length > 0) {
+            let html = '';
+            data.results.forEach(r => {
+                const alertClass = r.severity === 'HIGH' ? 'bg-danger bg-opacity-15 border-danger text-danger' : 'bg-warning bg-opacity-15 border-warning text-warning';
+                html += '<div class="alert ' + alertClass + ' border p-3 rounded mb-2">' +
+                    '<strong class="font-monospace">[' + r.severity + '] ' + r.check.replace(/_/g, ' ').toUpperCase() + '</strong>' +
+                    '<div class="small mt-1 text-light">' + NetSage.escapeHtml(r.message) + '</div>' +
+                    '</div>';
+            });
+            document.getElementById('ruleCheckModalBody').innerHTML = html;
+        } else {
+            document.getElementById('ruleCheckModalBody').innerHTML = '<div class="alert bg-success bg-opacity-15 border border-success text-success p-3 rounded mb-0">' +
+                '<i class="bi bi-check-circle-fill me-2"></i>No deterministic errors detected by rule checker</div>';
+        }
+    } catch (error) {
+        document.getElementById('ruleCheckModalBody').innerHTML = '<div class="alert bg-danger bg-opacity-20 text-danger border-0">Failed: ' + error.message + '</div>';
+    }
+}
+</script>
+{% endblock %}

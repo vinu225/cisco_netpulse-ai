@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}NetPulse AI - Cisco Network Intelligence Engine{% endblock %}</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Custom Cyber Styling -->
+    <link href="/static/css/style.css" rel="stylesheet">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Top Navigation Header -->
+    <nav class="navbar navbar-expand-lg navbar-custom sticky-top">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand-cyber me-4" href="/">
+                <div class="brand-icon-box">
+                    <i class="bi bi-activity fs-5"></i>
+                </div>
+                <span>NetPulse<span class="text-white fw-light ms-1" style="font-size: 0.9em;">AI</span></span>
+            </a>
+            
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navContent">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navContent">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0 gap-1">
+                    <li class="nav-item">
+                        <a class="nav-link nav-link-cyber {% if request.url.path == '/' %}active{% endif %}" href="/">
+                            <i class="bi bi-speedometer2"></i> Telemetry Overview
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link nav-link-cyber {% if request.url.path == '/diagnose' %}active{% endif %}" href="/diagnose">
+                            <i class="bi bi-cpu"></i> AI Console
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link nav-link-cyber {% if request.url.path == '/cases' %}active{% endif %}" href="/cases">
+                            <i class="bi bi-diagram-3"></i> Known Fault Matrix
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link nav-link-cyber {% if request.url.path == '/review' %}active{% endif %}" href="/review">
+                            <i class="bi bi-shield-check"></i> Human Verification
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link nav-link-cyber {% if request.url.path == '/dashboard' %}active{% endif %}" href="/dashboard">
+                            <i class="bi bi-bar-chart-line"></i> Performance Analytics
+                        </a>
+                    </li>
+                </ul>
+                
+                <div class="d-flex align-items-center gap-3">
+                    <div class="pulse-badge pulse-badge-live">
+                        <span class="pulse-dot"></span>
+                        <span>Engine Live</span>
+                    </div>
+                    <div class="text-muted small font-monospace d-none d-md-block" style="border-left: 1px solid var(--border-color); padding-left: 12px;">
+                        <span class="text-white-50">Node:</span> <span id="header-cases-count">30 Fault Models</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <main class="container-fluid px-4 py-4">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer-cyber">
+        <div class="container-fluid px-4 text-center text-md-between d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
+            <div>
+                <span class="text-gradient fw-bold">NetPulse AI Engine v2.5</span> — Cisco Packet Tracer AI Diagnostic Platform
+            </div>
+            <div class="text-muted small">
+                Deterministic Rule Verification &bull; Multi-Stage Telemetry Engine &bull; Responsible AI Audit
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/main.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

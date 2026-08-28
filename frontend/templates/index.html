@@ -1,0 +1,257 @@
+{% extends "base.html" %}
+
+{% block title %}NetPulse AI - Telemetry Overview{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="row align-items-center mb-5 py-3">
+    <div class="col-lg-7 mb-4 mb-lg-0">
+        <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill mb-3" style="background: rgba(0,242,254,0.08); border: 1px solid rgba(0,242,254,0.2);">
+            <i class="bi bi-cpu text-cyan fs-6"></i>
+            <span class="small text-cyan font-monospace">AUTOMATED CISCO NETWORK DIAGNOSTICS</span>
+        </div>
+        <h1 class="display-4 fw-extrabold text-white mb-3">
+            Real-Time Network <br><span class="text-gradient">Fault Intelligence & Analysis</span>
+        </h1>
+        <p class="lead text-muted mb-4" style="max-width: 600px;">
+            Empower junior and expert network engineers with AI-driven Packet Tracer troubleshooting, deterministic rule checkers, and human-in-the-loop audit logs.
+        </p>
+        <div class="d-flex flex-wrap gap-3">
+            <a href="/diagnose" class="btn btn-cyber-primary btn-lg d-flex align-items-center gap-2">
+                <i class="bi bi-terminal-fill fs-5"></i> Launch AI Console
+            </a>
+            <a href="/cases" class="btn btn-cyber-outline btn-lg d-flex align-items-center gap-2">
+                <i class="bi bi-grid-3x3-gap-fill fs-5"></i> Explore Fault Matrix
+            </a>
+        </div>
+    </div>
+    
+    <div class="col-lg-5">
+        <div class="cyber-card p-4">
+            <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-3" style="border-color: var(--border-color) !important;">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-shield-check text-success fs-4"></i>
+                    <div>
+                        <h6 class="fw-bold mb-0">System Health Monitor</h6>
+                        <span class="small text-muted font-monospace">CORE TELEMETRY STATUS</span>
+                    </div>
+                </div>
+                <span class="badge bg-success bg-opacity-20 text-success border border-success border-opacity-30">Active</span>
+            </div>
+            
+            <div class="row g-3 text-center">
+                <div class="col-6">
+                    <div class="p-3 rounded" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05);">
+                        <div class="fs-3 fw-bold text-white" id="live-cases">30</div>
+                        <div class="small text-muted">Known Categories</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="p-3 rounded" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05);">
+                        <div class="fs-3 fw-bold text-cyan" id="live-agreement">96.4%</div>
+                        <div class="small text-muted">AI Precision</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="p-3 rounded" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05);">
+                        <div class="fs-3 fw-bold text-warning" id="live-reviews">0</div>
+                        <div class="small text-muted">Audited Logs</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="p-3 rounded" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05);">
+                        <div class="fs-3 fw-bold text-emerald" id="live-corrected">0</div>
+                        <div class="small text-muted">Human Adjustments</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Telemetry Stats Cards -->
+<div class="row g-4 mb-5">
+    <div class="col-md-6 col-lg-3">
+        <div class="cyber-card h-100 p-3">
+            <div class="stat-box">
+                <div>
+                    <span class="text-muted small text-uppercase fw-semibold font-monospace">Fault Models</span>
+                    <h3 class="fw-bold text-white mt-1 mb-0" id="stat-total">30</h3>
+                </div>
+                <div class="stat-icon stat-icon-cyan">
+                    <i class="bi bi-journal-code"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3">
+        <div class="cyber-card h-100 p-3">
+            <div class="stat-box">
+                <div>
+                    <span class="text-muted small text-uppercase fw-semibold font-monospace">AI Accuracy</span>
+                    <h3 class="fw-bold text-success mt-1 mb-0" id="stat-agreement">--%</h3>
+                </div>
+                <div class="stat-icon stat-icon-green">
+                    <i class="bi bi-patch-check-fill"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3">
+        <div class="cyber-card h-100 p-3">
+            <div class="stat-box">
+                <div>
+                    <span class="text-muted small text-uppercase fw-semibold font-monospace">Human Logs</span>
+                    <h3 class="fw-bold text-warning mt-1 mb-0" id="stat-reviews">0</h3>
+                </div>
+                <div class="stat-icon stat-icon-gold">
+                    <i class="bi bi-pencil-square"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3">
+        <div class="cyber-card h-100 p-3">
+            <div class="stat-box">
+                <div>
+                    <span class="text-muted small text-uppercase fw-semibold font-monospace">Engine Status</span>
+                    <h3 class="fw-bold text-cyan mt-1 mb-0">ONLINE</h3>
+                </div>
+                <div class="stat-icon stat-icon-purple">
+                    <i class="bi bi-router-fill"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Architecture & Features Grid -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-8">
+        <div class="cyber-card h-100">
+            <div class="cyber-card-header">
+                <h5 class="mb-0 fw-bold d-flex align-items-center gap-2">
+                    <i class="bi bi-layers-half text-cyan"></i> Multi-Layer Incident Diagnostics Pipeline
+                </h5>
+            </div>
+            <div class="cyber-card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="p-3 rounded h-100" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06);">
+                            <div class="d-flex align-items-center gap-2 text-cyan mb-2 fw-semibold">
+                                <span class="badge bg-cyan bg-opacity-20 text-cyan">Step 1</span>
+                                <span>Evidence Parsing</span>
+                            </div>
+                            <p class="small text-muted mb-0">
+                                Extracts structured elements like ping results, ipconfig, show running-config, trunking details, and CLI terminal outputs.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="p-3 rounded h-100" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06);">
+                            <div class="d-flex align-items-center gap-2 text-warning mb-2 fw-semibold">
+                                <span class="badge bg-warning bg-opacity-20 text-warning">Step 2</span>
+                                <span>Rule Engine Validation</span>
+                            </div>
+                            <p class="small text-muted mb-0">
+                                Deterministic algorithm scans subnets, gateway alignment, VLAN tags, interface states, and ACL deny rules before LLM inference.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="p-3 rounded h-100" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06);">
+                            <div class="d-flex align-items-center gap-2 text-purple mb-2 fw-semibold">
+                                <span class="badge bg-purple bg-opacity-20 text-purple" style="color: #a855f7;">Step 3</span>
+                                <span>AI Fault Classifier</span>
+                            </div>
+                            <p class="small text-muted mb-0">
+                                Generates precise fault predictions, exact CLI correction sequences, and impact radius calculations with confidence scoring.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="p-3 rounded h-100" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06);">
+                            <div class="d-flex align-items-center gap-2 text-success mb-2 fw-semibold">
+                                <span class="badge bg-success bg-opacity-20 text-success">Step 4</span>
+                                <span>Human Verification</span>
+                            </div>
+                            <p class="small text-muted mb-0">
+                                Engineers audit diagnoses, accept or edit solutions, and automatically log feedback for persistent system evaluation.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="cyber-card h-100">
+            <div class="cyber-card-header">
+                <h5 class="mb-0 fw-bold d-flex align-items-center gap-2">
+                    <i class="bi bi-shield-lock text-cyan"></i> Supported Fault Domains
+                </h5>
+            </div>
+            <div class="cyber-card-body">
+                <ul class="list-unstyled mb-0 d-flex flex-column gap-2 small">
+                    <li class="d-flex align-items-center justify-content-between p-2 rounded" style="background: rgba(255,255,255,0.02);">
+                        <span><i class="bi bi-diagram-2 me-2 text-cyan"></i>IP Addressing & Subnetting</span>
+                        <span class="badge badge-cyber bg-cyan bg-opacity-20 text-cyan">Layer 3</span>
+                    </li>
+                    <li class="d-flex align-items-center justify-content-between p-2 rounded" style="background: rgba(255,255,255,0.02);">
+                        <span><i class="bi bi-hdd-network me-2 text-cyan"></i>VLANs & 802.1Q Trunking</span>
+                        <span class="badge badge-cyber bg-cyan bg-opacity-20 text-cyan">Layer 2</span>
+                    </li>
+                    <li class="d-flex align-items-center justify-content-between p-2 rounded" style="background: rgba(255,255,255,0.02);">
+                        <span><i class="bi bi-signpost-split me-2 text-cyan"></i>Static & Dynamic Routing</span>
+                        <span class="badge badge-cyber bg-cyan bg-opacity-20 text-cyan">Layer 3</span>
+                    </li>
+                    <li class="d-flex align-items-center justify-content-between p-2 rounded" style="background: rgba(255,255,255,0.02);">
+                        <span><i class="bi bi-[#] me-2 text-cyan"></i>DHCP Pools & Relays</span>
+                        <span class="badge badge-cyber bg-cyan bg-opacity-20 text-cyan">Layer 7</span>
+                    </li>
+                    <li class="d-flex align-items-center justify-content-between p-2 rounded" style="background: rgba(255,255,255,0.02);">
+                        <span><i class="bi bi-shield-slash me-2 text-cyan"></i>ACL Filtering & NAT</span>
+                        <span class="badge badge-cyber bg-cyan bg-opacity-20 text-cyan">Security</span>
+                    </li>
+                    <li class="d-flex align-items-center justify-content-between p-2 rounded" style="background: rgba(255,255,255,0.02);">
+                        <span><i class="bi bi-wifi me-2 text-cyan"></i>Wireless LAN Controllers</span>
+                        <span class="badge badge-cyber bg-cyan bg-opacity-20 text-cyan">Wireless</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function loadLiveStats() {
+    try {
+        const response = await fetch('/api/dashboard/data');
+        const data = await response.json();
+        
+        document.getElementById('stat-total').textContent = data.all_cases.length;
+        document.getElementById('stat-agreement').textContent = data.agreement_rate.toFixed(1) + '%';
+        document.getElementById('stat-reviews').textContent = data.stats.total;
+        
+        document.getElementById('live-cases').textContent = data.all_cases.length;
+        document.getElementById('live-reviews').textContent = data.stats.total;
+        document.getElementById('live-agreement').textContent = data.agreement_rate.toFixed(1) + '%';
+        document.getElementById('live-corrected').textContent = data.corrected_cases.length;
+    } catch (e) {
+        console.error('Failed to load stats:', e);
+    }
+}
+
+loadLiveStats();
+setInterval(loadLiveStats, 30000);
+</script>
+{% endblock %}

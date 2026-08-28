@@ -1,0 +1,454 @@
+{% extends "base.html" %}
+
+{% block title %}AI Diagnostic Console - NetPulse AI{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col-md-8">
+        <h1 class="h3 fw-bold text-white mb-1">
+            <i class="bi bi-cpu text-cyan me-2"></i>AI Incident Diagnostic Console
+        </h1>
+        <p class="text-muted mb-0">Input Packet Tracer evidence, CLI outputs, or select pre-loaded fault scenarios for automated diagnostic evaluation.</p>
+    </div>
+    <div class="col-md-4 text-md-end mt-3 mt-md-0">
+        <div class="btn-group btn-group-sm" role="group">
+            <button type="button" class="btn btn-cyber-outline" onclick="loadSampleEvidence('subnet')">Preset: Subnet</button>
+            <button type="button" class="btn btn-cyber-outline" onclick="loadSampleEvidence('vlan')">Preset: VLAN</button>
+            <button type="button" class="btn btn-cyber-outline" onclick="loadSampleEvidence('acl')">Preset: ACL</button>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Left Column: Input Form -->
+    <div class="col-lg-7">
+        <div class="cyber-card h-100">
+            <div class="cyber-card-header">
+                <h5 class="mb-0 fw-bold d-flex align-items-center gap-2">
+                    <i class="bi bi-file-earmark-code text-cyan"></i> Network Telemetry & Evidence Workspace
+                </h5>
+                <span class="badge bg-secondary bg-opacity-20 text-muted font-monospace">CLI & Logs Input</span>
+            </div>
+            <div class="cyber-card-body">
+                <form id="diagnose-form">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small text-muted font-monospace fw-semibold">SELECT TARGET CASE (OPTIONAL)</label>
+                            <select class="form-select form-select-cyber" id="case-id" name="case_id">
+                                <option value="">Auto-Detect from Raw Telemetry</option>
+                                {% for case in cases %}
+                                <option value="{{ case.case_id }}">Case {{ case.case_id }}: {{ case.title }} [{{ case.concept }}]</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small text-muted font-monospace fw-semibold">LOAD EVIDENCE FILE</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control form-control-cyber" id="evidence-file" placeholder="case_01.txt" value="case_01.txt">
+                                <button type="button" class="btn btn-cyber-outline" onclick="loadEvidenceFile()">Load</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <label class="form-label small text-muted font-monospace fw-semibold mb-0">TELEMETRY & CLI EVIDENCE STREAM</label>
+                            <span class="small text-muted">Supports structured headers or raw Packet Tracer logs</span>
+                        </div>
+                        <textarea class="form-control form-control-cyber code-console" id="evidence-text" name="evidence_text" rows="14" placeholder="[user_description]
+PC1 cannot ping PC2. Both connected to switch SW1.
+
+[ping_results]
+Pinging 192.168.1.20 with 32 bytes of data:
+Request timed out.
+Packets: Sent = 4, Received = 0, Lost = 4 (100% loss)
+
+[ipconfig]
+IPv4 Address: 192.168.2.10
+Subnet Mask: 255.255.255.0
+Default Gateway: 0.0.0.0
+
+[show_ip_interface_brief]
+GigabitEthernet0/0 192.168.1.1 up up"></textarea>
+                    </div>
+                    
+                    <div class="d-flex gap-3">
+                        <button type="submit" class="btn btn-cyber-primary px-4 py-2 d-flex align-items-center gap-2" id="diagnose-btn">
+                            <i class="bi bi-play-circle-fill fs-5"></i> Run AI Diagnosis
+                        </button>
+                        <button type="button" class="btn btn-cyber-outline px-4 py-2" onclick="clearForm()">
+                            <i class="bi bi-trash me-1"></i> Clear Workspace
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Right Column: Deterministic Checks -->
+    <div class="col-lg-5">
+        <div class="cyber-card h-100">
+            <div class="cyber-card-header">
+                <h5 class="mb-0 fw-bold d-flex align-items-center gap-2">
+                    <i class="bi bi-shield-check text-warning"></i> Rule Checker Verification
+                </h5>
+                <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-20 font-monospace">Phase 1</span>
+            </div>
+            <div class="cyber-card-body" id="rule-results">
+                <div class="text-center text-muted py-5">
+                    <i class="bi bi-shield-lock display-4 text-dark opacity-50 mb-3"></i>
+                    <h6 class="fw-semibold text-white">Rule Checker Ready</h6>
+                    <p class="small text-muted" style="max-width: 320px; margin: 0 auto;">
+                        Executes deterministic validation checks for subnet mismatches, gateway errors, down interfaces, VLAN gaps, and ACL filters.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- AI Diagnosis Output Section -->
+<div class="row g-4 mt-2">
+    <div class="col-12">
+        <div class="cyber-card">
+            <div class="cyber-card-header">
+                <h5 class="mb-0 fw-bold d-flex align-items-center gap-2">
+                    <i class="bi bi-robot text-cyan"></i> AI Diagnostic Report & Remediation Plan
+                </h5>
+                <div class="btn-group btn-group-sm" role="group">
+                    <button type="button" class="btn btn-cyber-outline" onclick="copyDiagnosis()"><i class="bi bi-clipboard me-1"></i> Copy Telemetry</button>
+                    <button type="button" class="btn btn-cyber-outline" onclick="downloadDiagnosis()"><i class="bi bi-download me-1"></i> Export Report</button>
+                </div>
+            </div>
+            <div class="cyber-card-body" id="diagnosis-result">
+                <div class="text-center text-muted py-5">
+                    <i class="bi bi-cpu display-3 text-dark opacity-50 mb-3"></i>
+                    <h5 class="fw-semibold text-white">Awaiting Telemetry Input</h5>
+                    <p class="small text-muted">Execute diagnosis to view predicted fault category, confidence scores, evidence breakdown, and CLI commands.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Human Verification / Feedback Form -->
+<div class="row g-4 mt-2" id="review-section" style="display: none;">
+    <div class="col-12">
+        <div class="cyber-card border-warning border-opacity-40">
+            <div class="cyber-card-header bg-warning bg-opacity-10">
+                <h5 class="mb-0 fw-bold text-warning d-flex align-items-center gap-2">
+                    <i class="bi bi-person-check-fill"></i> Human Engineer Audit & Feedback Form
+                </h5>
+                <span class="badge bg-warning text-dark font-monospace">Verification Required</span>
+            </div>
+            <div class="cyber-card-body">
+                <form id="review-form">
+                    <input type="hidden" id="review-case-id" name="case_id">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label small text-muted font-monospace fw-semibold">ENGINEER DECISION</label>
+                            <select class="form-select form-select-cyber" id="review-decision" name="decision" required>
+                                <option value="">Select Audit Result...</option>
+                                <option value="Accepted">Accepted - AI Diagnosis is Correct</option>
+                                <option value="Edited">Edited - AI Diagnosis Needs Correction</option>
+                                <option value="Rejected">Rejected - AI Diagnosis is Incorrect</option>
+                            </select>
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label small text-muted font-monospace fw-semibold">AUDIT NOTES & OBSERVATIONS</label>
+                            <input type="text" class="form-control form-control-cyber" id="review-notes" name="notes" placeholder="e.g., Verified interface FastEthernet0/1 VLAN mismatch on switch SW1">
+                        </div>
+                    </div>
+                    
+                    <div id="correction-fields" style="display: none;">
+                        <hr class="border-secondary my-4">
+                        <h6 class="text-warning fw-bold mb-3"><i class="bi bi-pencil-square me-2"></i>Human Correction Parameters</h6>
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted font-monospace">CORRECTED FAULT TITLE</label>
+                                <input type="text" class="form-control form-control-cyber" id="corrected-fault" name="corrected_fault" placeholder="e.g., Wrong VLAN Encapsulation">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small text-muted font-monospace">CONFIDENCE SCORE (0-1.0)</label>
+                                <input type="number" class="form-control form-control-cyber" id="corrected-confidence" name="corrected_confidence" step="0.01" min="0" max="1" value="0.95">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small text-muted font-monospace">CLI COMMANDS (COMMA SEPARATED)</label>
+                                <input type="text" class="form-control form-control-cyber" id="corrected-commands" name="corrected_commands" placeholder="enable, conf t, interface g0/0, no shut">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small text-muted font-monospace">CORRECTED TECHNICAL REASONING</label>
+                            <textarea class="form-control form-control-cyber" id="corrected-reasoning" name="corrected_reasoning" rows="2" placeholder="Explain why the AI diagnosis was adjusted and detail the underlying root cause..."></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small text-muted font-monospace">CORRECTED REMEDIATION FIX</label>
+                            <textarea class="form-control form-control-cyber" id="corrected-fix" name="corrected_fix" rows="2" placeholder="Step-by-step remediation procedure..."></textarea>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-warning fw-bold px-4 py-2 d-flex align-items-center gap-2">
+                        <i class="bi bi-save2-fill"></i> Save Engineer Verification Log
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Load evidence from file
+async function loadEvidenceFile() {
+    const filename = document.getElementById('evidence-file').value;
+    const caseId = document.getElementById('case-id').value;
+    if (!filename) return;
+    
+    const url = caseId ? `/api/cases/${caseId}/evidence/${filename}` : `/api/cases/1/evidence/${filename}`;
+    
+    try {
+        const response = await fetch(url);
+        const data = await response.json();
+        if (data.evidence_raw) {
+            document.getElementById('evidence-text').value = data.evidence_raw;
+            NetSage.toast('Telemetry evidence loaded successfully');
+        }
+    } catch (e) {
+        NetSage.toast('Failed to load telemetry evidence file', 'error');
+    }
+}
+
+function loadSampleEvidence(type) {
+    const samples = {
+        subnet: `[user_description]\nPC1 cannot communicate with PC2 on local switch.\n\n[ipconfig]\nIPv4 Address: 192.168.1.10\nSubnet Mask: 255.255.0.0\nDefault Gateway: 192.168.1.1\n\n[ping_results]\nPinging 192.168.1.20 with 32 bytes of data:\nRequest timed out.`,
+        vlan: `[user_description]\nPC1 in VLAN 10 cannot ping PC2 in VLAN 20.\n\n[show_vlan_brief]\nVLAN 10: Fa0/1\nVLAN 20: Fa0/2\n\n[show_interfaces_trunk]\nPort Fa0/24 mode access`,
+        acl: `[user_description]\nWeb server 10.0.0.5 unreachable from LAN.\n\n[show_access_lists]\nExtended IP access list 100\n 10 deny tcp any host 10.0.0.5 eq www`
+    };
+    if (samples[type]) {
+        document.getElementById('evidence-text').value = samples[type];
+        NetSage.toast(`Loaded preset evidence: ${type.toUpperCase()}`);
+    }
+}
+
+// Handle diagnosis form submit
+document.getElementById('diagnose-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const btn = document.getElementById('diagnose-btn');
+    const evidenceText = document.getElementById('evidence-text').value;
+    const caseId = document.getElementById('case-id').value || null;
+    
+    if (!evidenceText.trim()) {
+        NetSage.toast('Please provide network telemetry or CLI evidence', 'error');
+        return;
+    }
+    
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></i>Analyzing Telemetry...';
+    
+    try {
+        const response = await fetch('/api/diagnose', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                case_id: caseId ? parseInt(caseId) : null,
+                evidence_text: evidenceText
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            displayDiagnosis(data.diagnosis, data.formatted);
+            displayRuleResults(data.rule_results);
+            
+            if (caseId) {
+                document.getElementById('review-section').style.display = 'block';
+                document.getElementById('review-case-id').value = caseId;
+            }
+            
+            NetSage.toast('Diagnostic evaluation complete');
+        } else {
+            NetSage.toast(data.detail || 'Diagnosis failed', 'error');
+        }
+    } catch (error) {
+        NetSage.toast('Error: ' + error.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-play-circle-fill fs-5 me-2"></i>Run AI Diagnosis';
+    }
+});
+
+// Display rule checker results
+function displayRuleResults(results) {
+    const container = document.getElementById('rule-results');
+    
+    if (!results || results.length === 0) {
+        container.innerHTML = `
+            <div class="alert bg-success bg-opacity-10 border border-success border-opacity-30 text-success p-3 rounded mb-0">
+                <div class="d-flex align-items-center gap-2 font-monospace fw-bold mb-1">
+                    <i class="bi bi-check-circle-fill fs-5"></i> ALL DETERMINISTIC CHECKS PASSED
+                </div>
+                <div class="small">No static configuration errors or subnet mismatches detected by Phase 1 engine.</div>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '';
+    results.forEach(r => {
+        const alertClass = r.severity === 'HIGH' ? 'bg-danger bg-opacity-15 border-danger border-opacity-30 text-danger' : 'bg-warning bg-opacity-15 border-warning border-opacity-30 text-warning';
+        html += `
+            <div class="alert ${alertClass} p-3 rounded mb-3">
+                <div class="d-flex justify-content-between align-items-center font-monospace fw-bold mb-1">
+                    <span><i class="bi bi-exclamation-triangle-fill me-2"></i>[${r.severity}] ${r.check.replace(/_/g, ' ').toUpperCase()}</span>
+                    <span class="badge bg-secondary bg-opacity-20 text-white">Rule Failure</span>
+                </div>
+                <div class="small text-white-50 mt-1">${r.message}</div>
+            </div>
+        `;
+    });
+    container.innerHTML = html;
+}
+
+// Display AI diagnosis
+function displayDiagnosis(diagnosis, formatted) {
+    const container = document.getElementById('diagnosis-result');
+    const confidencePct = (diagnosis.confidence * 100).toFixed(0);
+    const confidenceClass = diagnosis.confidence >= 0.8 ? 'text-success' : diagnosis.confidence >= 0.5 ? 'text-warning' : 'text-danger';
+    
+    container.innerHTML = `
+        <div class="row g-3 mb-4">
+            <div class="col-md-5">
+                <div class="p-3 rounded" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color);">
+                    <div class="text-muted small font-monospace text-uppercase mb-1">Predicted Fault Category</div>
+                    <div class="fw-bold fs-5 text-cyan">${NetSage.escapeHtml(diagnosis.predicted_fault)}</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="p-3 rounded" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color);">
+                    <div class="text-muted small font-monospace text-uppercase mb-1">Confidence Score</div>
+                    <div class="fw-bold fs-5 ${confidenceClass}">${confidencePct}%</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-3 rounded" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color);">
+                    <div class="text-muted small font-monospace text-uppercase mb-1">Impact Radius & Risk</div>
+                    <div class="fw-bold fs-5 text-warning">${NetSage.escapeHtml(diagnosis.impact_radius || 'Subnet Scope')} (${diagnosis.risk_score || 45} Risk)</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mb-4">
+            <h6 class="fw-bold text-white mb-2"><i class="bi bi-card-text text-cyan me-2"></i>Technical Reasoning & Analysis</h6>
+            <div class="p-3 rounded text-light" style="background: rgba(15,23,42,0.6); border: 1px solid var(--border-color);">
+                ${NetSage.escapeHtml(diagnosis.reasoning_summary)}
+            </div>
+        </div>
+        
+        <div class="mb-4">
+            <h6 class="fw-bold text-white mb-2"><i class="bi bi-list-check text-cyan me-2"></i>Key Evidence Used</h6>
+            <ul class="list-group list-group-flush rounded border-0">
+                ${diagnosis.evidence_used.map(ev => `<li class="list-group-item bg-transparent text-muted small border-secondary border-opacity-25"><i class="bi bi-caret-right-fill text-cyan me-2"></i>${NetSage.escapeHtml(ev)}</li>`).join('')}
+            </ul>
+        </div>
+        
+        <div class="mb-4">
+            <h6 class="fw-bold text-white mb-2"><i class="bi bi-wrench-adjustable text-success me-2"></i>Recommended Remediation Plan</h6>
+            <div class="p-3 rounded text-emerald" style="background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2);">
+                ${NetSage.escapeHtml(diagnosis.recommended_fix)}
+            </div>
+        </div>
+        
+        <div class="mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="fw-bold text-white mb-0"><i class="bi bi-terminal text-cyan me-2"></i>Cisco IOS CLI Fix Commands</h6>
+                <button type="button" class="btn btn-cyber-outline btn-sm" onclick="NetSage.copyToClipboard('${diagnosis.commands.join('\\n').replace(/'/g, "\\'")}')">
+                    <i class="bi bi-copy me-1"></i> Copy Commands
+                </button>
+            </div>
+            <pre class="code-console mb-0">${diagnosis.commands.map(NetSage.escapeHtml).join('\n')}</pre>
+        </div>
+    `;
+}
+
+// Handle review form toggle and submit
+document.getElementById('review-decision').addEventListener('change', (e) => {
+    const correctionFields = document.getElementById('correction-fields');
+    correctionFields.style.display = (e.target.value === 'Edited' || e.target.value === 'Rejected') ? 'block' : 'none';
+});
+
+document.getElementById('review-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const decision = document.getElementById('review-decision').value;
+    const needsCorrection = decision === 'Edited' || decision === 'Rejected';
+    
+    if (needsCorrection && !document.getElementById('corrected-fault').value.trim()) {
+        NetSage.toast('Corrected fault title is required for Edited/Rejected verification', 'error');
+        return;
+    }
+    
+    const payload = {
+        case_id: parseInt(document.getElementById('review-case-id').value),
+        decision: decision,
+        notes: document.getElementById('review-notes').value
+    };
+    
+    if (needsCorrection) {
+        payload.corrected_fault = document.getElementById('corrected-fault').value;
+        payload.corrected_confidence = parseFloat(document.getElementById('corrected-confidence').value);
+        payload.corrected_reasoning = document.getElementById('corrected-reasoning').value;
+        payload.corrected_fix = document.getElementById('corrected-fix').value;
+        payload.corrected_commands = document.getElementById('corrected-commands').value.split(',').map(c => c.trim()).filter(c => c);
+    }
+    
+    try {
+        const response = await fetch('/api/review', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+        
+        if (response.ok) {
+            NetSage.toast('Verification log saved successfully!');
+            document.getElementById('review-form').reset();
+            document.getElementById('correction-fields').style.display = 'none';
+        } else {
+            NetSage.toast('Failed to save verification log', 'error');
+        }
+    } catch (error) {
+        NetSage.toast('Error: ' + error.message, 'error');
+    }
+});
+
+function clearForm() {
+    document.getElementById('diagnose-form').reset();
+    document.getElementById('rule-results').innerHTML = `
+        <div class="text-center text-muted py-5">
+            <i class="bi bi-shield-lock display-4 text-dark opacity-50 mb-3"></i>
+            <h6 class="fw-semibold text-white">Rule Checker Ready</h6>
+            <p class="small text-muted">Run diagnosis to execute Phase 1 validation checks.</p>
+        </div>
+    `;
+    document.getElementById('diagnosis-result').innerHTML = `
+        <div class="text-center text-muted py-5">
+            <i class="bi bi-cpu display-3 text-dark opacity-50 mb-3"></i>
+            <h5 class="fw-semibold text-white">Awaiting Telemetry Input</h5>
+        </div>
+    `;
+    document.getElementById('review-section').style.display = 'none';
+}
+
+function copyDiagnosis() {
+    const text = document.getElementById('diagnosis-result').innerText;
+    NetSage.copyToClipboard(text);
+}
+
+function downloadDiagnosis() {
+    const text = document.getElementById('diagnosis-result').innerText;
+    NetSage.downloadText(text, 'NetPulse_AI_Diagnosis_Report.txt');
+}
+</script>
+{% endblock %}

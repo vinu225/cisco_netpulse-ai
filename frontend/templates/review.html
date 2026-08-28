@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block title %}Human Verification Log - NetPulse AI{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col-md-8">
+        <h1 class="h3 fw-bold text-white mb-1">
+            <i class="bi bi-shield-check text-cyan me-2"></i>Human Engineer Audit Log
+        </h1>
+        <p class="text-muted mb-0">Track and review all AI diagnostic decisions validated by network engineers — Accepted, Edited, or Rejected.</p>
+    </div>
+</div>
+
+<!-- KPI Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="cyber-card p-3 h-100 text-center">
+            <h2 class="fw-bold text-cyan mb-0" id="review-total">{{ stats.total }}</h2>
+            <span class="text-muted small font-monospace text-uppercase">Total Audits</span>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="cyber-card p-3 h-100 text-center" style="border-left: 3px solid var(--emerald-green);">
+            <h2 class="fw-bold text-success mb-0" id="review-accepted">{{ stats.accepted }}</h2>
+            <span class="text-muted small font-monospace text-uppercase">Accepted AI Fixes</span>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="cyber-card p-3 h-100 text-center" style="border-left: 3px solid var(--amber-gold);">
+            <h2 class="fw-bold text-warning mb-0" id="review-edited">{{ stats.edited }}</h2>
+            <span class="text-muted small font-monospace text-uppercase">Human Edited</span>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="cyber-card p-3 h-100 text-center" style="border-left: 3px solid var(--crimson-red);">
+            <h2 class="fw-bold text-danger mb-0" id="review-rejected">{{ stats.rejected }}</h2>
+            <span class="text-muted small font-monospace text-uppercase">Rejected Diagnoses</span>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="cyber-card">
+            <div class="cyber-card-header">
+                <h6 class="mb-0 fw-bold d-flex align-items-center gap-2">
+                    <i class="bi bi-pencil-square text-warning"></i> Engineer Adjusted Scenarios
+                </h6>
+                <span class="badge bg-warning text-dark font-monospace">{{ corrected|length }} Adjusted</span>
+            </div>
+            <div class="cyber-card-body p-0">
+                {% if corrected|length > 0 %}
+                <div class="table-responsive">
+                    <table class="table table-cyber mb-0">
+                        <thead>
+                            <tr>
+                                <th style="width: 70px;">ID</th>
+                                <th>Fault Title</th>
+                                <th style="width: 110px;">Decision</th>
+                                <th>AI Prediction</th>
+                                <th>Engineer Correction</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for case in corrected %}
+                            <tr>
+                                <td class="fw-bold text-cyan font-monospace">#{{ case.case_id }}</td>
+                                <td class="fw-semibold text-white">{{ case.title }}</td>
+                                <td>
+                                    <span class="badge {{ 'bg-success text-white' if case.decision == 'Accepted' else 'bg-warning text-dark' if case.decision == 'Edited' else 'bg-danger text-white' }}">
+                                        {{ case.decision }}
+                                    </span>
+                                </td>
+                                <td class="small text-muted">{{ case.ai_fault }}</td>
+                                <td class="small fw-bold text-warning">{{ case.corrected_fault or '—' }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5 text-muted">
+                    <i class="bi bi-clipboard-check display-3 text-dark opacity-50 mb-2"></i>
+                    <p class="mt-2 small">No engineer corrections logged yet</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="cyber-card h-100">
+            <div class="cyber-card-header">
+                <h6 class="mb-0 fw-bold d-flex align-items-center gap-2">
+                    <i class="bi bi-graph-up text-cyan"></i> Precision Agreement Meter
+                </h6>
+            </div>
+            <div class="cyber-card-body text-center d-flex flex-column justify-content-center">
+                <div class="display-2 fw-bold text-cyan" id="agreement-rate">{{ "%.1f"|format((stats.accepted / stats.total * 100) if stats.total > 0 else 0) }}%</div>
+                <p class="text-muted small">AI-Human Alignment Score</p>
+                <div class="progress mt-3" style="height: 10px; background: rgba(255,255,255,0.05);">
+                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ (stats.accepted / stats.total * 100) if stats.total > 0 else 0 }}%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Raw Log Viewer Card -->
+<div class="row g-4 mt-2">
+    <div class="col-12">
+        <div class="cyber-card">
+            <div class="cyber-card-header">
+                <h6 class="mb-0 fw-bold d-flex align-items-center gap-2">
+                    <i class="bi bi-journal-text text-cyan"></i> Full Audit History Log
+                </h6>
+                <button class="btn btn-cyber-outline btn-sm" onclick="downloadLog()">
+                    <i class="bi bi-download me-1"></i> Download Markdown Log
+                </button>
+            </div>
+            <div class="cyber-card-body">
+                <div id="review-log-content" style="max-height: 480px; overflow-y: auto;">
+                    <div class="text-center text-muted py-5">
+                        <div class="spinner-border text-cyan"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function loadReviewLog() {
+    try {
+        const response = await fetch('/api/review/stats');
+        const data = await response.json();
+        
+        document.getElementById('review-total').textContent = data.stats.total;
+        document.getElementById('review-accepted').textContent = data.stats.accepted;
+        document.getElementById('review-edited').textContent = data.stats.edited;
+        document.getElementById('review-rejected').textContent = data.stats.rejected;
+        
+        const agreement = data.stats.total > 0 ? (data.stats.accepted / data.stats.total * 100) : 0;
+        document.getElementById('agreement-rate').textContent = agreement.toFixed(1) + '%';
+        
+        // Load full log from markdown file
+        const logResponse = await fetch('/static/data/human_review_log.md');
+        const logText = await logResponse.text();
+        
+        let html = logText
+            .replace(/^## Case (\d+): (.+)$/gm, '<hr class="border-secondary border-opacity-25"><h6 class="text-cyan font-monospace mt-3">Case #$1: $2</h6>')
+            .replace(/\*\*Human Decision:\*\* (.+)$/gm, '<p class="mb-1"><strong>Decision:</strong> <span class="badge bg-info text-dark">$1</span></p>')
+            .replace(/\*\*Timestamp:\*\* (.+)$/gm, '<p class="small text-muted font-monospace">$1</p>')
+            .replace(/\*\*AI Diagnosis\*\*/gm, '<h6 class="text-white small fw-bold mt-2">AI Diagnosis</h6>')
+            .replace(/\*\*Human Correction\*\*/gm, '<h6 class="text-warning small fw-bold mt-2">Human Correction</h6>')
+            .replace(/\*\*Human Notes\*\*/gm, '<h6 class="text-white small fw-bold mt-2">Human Notes</h6>')
+            .replace(/^- (.+)$/gm, '<li class="text-muted small">$1</li>')
+            .replace(/\n\n/gm, '</p><p>')
+            .replace(/\n/gm, '<br>');
+        
+        document.getElementById('review-log-content').innerHTML = `<div class="p-3 text-light">${html}</div>`;
+    } catch (error) {
+        document.getElementById('review-log-content').innerHTML = `<div class="alert bg-danger bg-opacity-20 text-danger border-0">Failed to load review audit log: ${error.message}</div>`;
+    }
+}
+
+function downloadLog() {
+    window.open('/static/data/human_review_log.md', '_blank');
+}
+
+loadReviewLog();
+</script>
+{% endblock %}
