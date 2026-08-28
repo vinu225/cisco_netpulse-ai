@@ -236,16 +236,23 @@ document.getElementById('diagnose-form').addEventListener('submit', async (e) =>
     e.preventDefault();
     
     const btn = document.getElementById('diagnose-btn');
-    const evidenceText = document.getElementById('evidence-text').value;
+    let evidenceText = document.getElementById('evidence-text').value;
     const caseId = document.getElementById('case-id').value || null;
     
     if (!evidenceText.trim()) {
-        NetSage.toast('Please provide network telemetry or CLI evidence', 'error');
-        return;
+        const placeholderText = document.getElementById('evidence-text').placeholder;
+        if (placeholderText && placeholderText.trim()) {
+            document.getElementById('evidence-text').value = placeholderText;
+            evidenceText = placeholderText;
+            NetSage.toast('Loaded sample telemetry from template');
+        } else {
+            NetSage.toast('Please provide network telemetry or CLI evidence', 'error');
+            return;
+        }
     }
     
     btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></i>Analyzing Telemetry...';
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Analyzing Telemetry...';
     
     try {
         const response = await fetch('/api/diagnose', {
