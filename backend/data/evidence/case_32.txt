@@ -1,0 +1,30 @@
+[user_description]
+PC3 connected to switch port Fa0/1 lost network connectivity after an unauthorized laptop was briefly plugged into the network wall outlet.
+
+[ping_results]
+Pinging 192.168.1.1: Destination host unreachable.
+
+[ipconfig]
+IPv4 Address: 192.168.1.50
+Subnet Mask: 255.255.255.0
+Default Gateway: 192.168.1.1
+
+[show_ip_interface_brief]
+FastEthernet0/1 down down
+
+[other_cli_output]
+Switch1# show interfaces fastEthernet 0/1 status
+Port      Name               Status       Vlan       Duplex  Speed Type
+Fa0/1                        err-disabled 10           auto   auto 10/100BaseTX
+
+Switch1# show port-security interface fastEthernet 0/1
+Port Security              : Enabled
+Port Status                : Secure-shutdown
+Violation Mode             : Shutdown
+Aging Time                 : 0 mins
+Maximum MAC Addresses      : 1
+Total MAC Addresses        : 1
+Configured MAC Addresses   : 0
+Sticky MAC Addresses       : 1
+Last Source Address:Vlan   : 0050.56C0.0008:10
+Security Violation Count   : 1

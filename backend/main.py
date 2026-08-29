@@ -1,4 +1,4 @@
-"""FastAPI backend for NetSage AI - Cisco Network Troubleshooting Assistant."""
+"""FastAPI backend for NetPulse AI - Cisco Network Troubleshooting & Diagnostic Engine."""
 
 import asyncio
 import json
@@ -89,7 +89,7 @@ class DashboardData(BaseModel):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
-    logger.info("Starting NetSage AI Backend...")
+    logger.info("Starting NetPulse AI Telemetry Backend...")
     create_all_placeholders()
     logger.info("Placeholders created")
     yield
@@ -97,8 +97,8 @@ async def lifespan(app: FastAPI):
     logger.info("Shutting down...")
 
 app = FastAPI(
-    title="NetSage AI",
-    description="Cisco Network Troubleshooting Assistant",
+    title="NetPulse AI",
+    description="Next-Gen Cisco Network Intelligence & AI Diagnostic Engine",
     version="1.0.0",
     lifespan=lifespan
 )

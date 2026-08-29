@@ -1,6 +1,6 @@
 // NetPulse AI - Core Telemetry & UI Engine JavaScript
 
-window.NetSage = {
+window.NetPulse = {
     // Cyber Toast notifications
     toast(message, type = 'success') {
         const container = this.getToastContainer();
@@ -86,14 +86,44 @@ window.NetSage = {
         a.click();
         URL.revokeObjectURL(url);
         this.toast(`Exported file: ${filename}`);
+    },
+
+    // Light / Dark Theme Management
+    initTheme() {
+        const theme = localStorage.getItem('netpulse-theme') || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+        this.applyTheme(theme, false);
+    },
+
+    applyTheme(theme, showToast = true) {
+        document.documentElement.setAttribute('data-bs-theme', theme);
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('netpulse-theme', theme);
+        
+        const btnIcon = document.getElementById('theme-toggle-icon');
+        if (btnIcon) {
+            btnIcon.className = theme === 'light' ? 'bi bi-sun-fill text-warning fs-5' : 'bi bi-moon-stars-fill text-info fs-5';
+        }
+
+        if (showToast) {
+            this.toast(`Switched to ${theme === 'light' ? 'Light' : 'Dark'} Mode`);
+        }
+    },
+
+    toggleTheme() {
+        const currentTheme = document.documentElement.getAttribute('data-bs-theme') || 'dark';
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        this.applyTheme(newTheme, true);
     }
 };
 
-// Aliases for backwards compatibility
-window.NetPulse = window.NetSage;
+// Compatibility alias
+window.NetSage = window.NetPulse;
 
 // Initialize on DOM Ready
 document.addEventListener('DOMContentLoaded', () => {
+    // Initialize Theme UI
+    NetPulse.initTheme();
+
     // Keyboard shortcuts: Ctrl/Cmd + Enter to submit active forms
     document.addEventListener('keydown', (e) => {
         if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {

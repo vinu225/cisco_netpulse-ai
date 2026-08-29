@@ -1,26 +1,26 @@
-"""Evidence parsing and normalization for the Cisco Network Troubleshooting AI."""
+"""Telemetry evidence parser and log normalizer for NetPulse AI Engine."""
 
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Dict
 from src.config import EVIDENCE_DIR
 from src.models import Evidence
 
 
 def load_evidence(case_id: int) -> Optional[Evidence]:
-    """Load evidence from a case file."""
-    evidence_file = EVIDENCE_DIR / f"case_{case_id:02d}.txt"
-    if not evidence_file.exists():
+    """Retrieve telemetry log file for specified case ID."""
+    target_path = EVIDENCE_DIR / f"case_{case_id:02d}.txt"
+    if not target_path.exists():
         return None
     
-    content = evidence_file.read_text(encoding="utf-8")
-    return parse_evidence_file(content, case_id)
+    file_raw_text = target_path.read_text(encoding="utf-8")
+    return parse_evidence_file(file_raw_text, case_id)
 
 
 def parse_evidence_file(content: str, case_id: int) -> Evidence:
-    """Parse a structured evidence file into an Evidence object."""
-    evidence = Evidence(case_id=case_id)
+    """Parse raw multiline text logs into a structured Evidence model instance."""
+    evidence_obj = Evidence(case_id=case_id)
     
-    sections = {
+    section_map: Dict[str, str] = {
         "user_description": "user_description",
         "ping_results": "ping_results",
         "ipconfig": "ipconfig",
@@ -34,39 +34,39 @@ def parse_evidence_file(content: str, case_id: int) -> Evidence:
         "other_cli_output": "other_cli_output",
     }
     
-    current_section = None
-    current_content = []
+    active_attr: Optional[str] = None
+    accumulated_lines: list[str] = []
     
-    for line in content.splitlines():
-        line_lower = line.lower().strip()
-        matched_section = None
+    for raw_line in content.splitlines():
+        line_clean = raw_line.strip().lower()
+        matched_attr: Optional[str] = None
         
-        for key, attr in sections.items():
-            if line_lower.startswith(f"[{key}]") or line_lower.startswith(f"=== {key} ==="):
-                matched_section = attr
+        for section_key, attr_name in section_map.items():
+            if line_clean.startswith(f"[{section_key}]") or line_clean.startswith(f"=== {section_key} ==="):
+                matched_attr = attr_name
                 break
-        
-        if matched_section:
-            if current_section and current_content:
-                setattr(evidence, current_section, "\n".join(current_content).strip())
-            current_section = matched_section
-            current_content = []
+                
+        if matched_attr is not None:
+            if active_attr and accumulated_lines:
+                setattr(evidence_obj, active_attr, "\n".join(accumulated_lines).strip())
+            active_attr = matched_attr
+            accumulated_lines = []
         else:
-            current_content.append(line)
-    
-    if current_section and current_content:
-        setattr(evidence, current_section, "\n".join(current_content).strip())
-    
-    return evidence
+            accumulated_lines.append(raw_line)
+            
+    if active_attr and accumulated_lines:
+        setattr(evidence_obj, active_attr, "\n".join(accumulated_lines).strip())
+        
+    return evidence_obj
 
 
 def create_placeholder_evidence(case_id: int) -> None:
-    """Create a placeholder evidence file for a case."""
-    evidence_file = EVIDENCE_DIR / f"case_{case_id:02d}.txt"
-    if evidence_file.exists():
+    """Generate default placeholder telemetry text file if missing."""
+    file_path = EVIDENCE_DIR / f"case_{case_id:02d}.txt"
+    if file_path.exists():
         return
-    
-    template = f"""[user_description]
+        
+    placeholder_template = """[user_description]
 EVIDENCE NOT COLLECTED YET
 
 [ping_results]
@@ -99,23 +99,24 @@ EVIDENCE NOT COLLECTED YET
 [other_cli_output]
 EVIDENCE NOT COLLECTED YET
 """
-    evidence_file.write_text(template, encoding="utf-8")
+    file_path.write_text(placeholder_template, encoding="utf-8")
 
 
 def create_all_placeholders() -> None:
-    """Create placeholder evidence files for all 30 cases."""
-    for i in range(1, 31):
-        create_placeholder_evidence(i)
+    """Ensure placeholder evidence files exist across all cases."""
+    EVIDENCE_DIR.mkdir(parents=True, exist_ok=True)
+    for cid in range(1, 35):
+        create_placeholder_evidence(cid)
 
 
 def normalize_evidence(evidence: Evidence) -> str:
-    """Convert Evidence object to a formatted string for the LLM."""
-    parts = []
-    evidence_dict = evidence.to_dict()
+    """Format structured evidence into normalized telemetry string for AI prompting."""
+    blocks = []
+    dict_payload = evidence.to_dict()
     
-    for key, value in evidence_dict.items():
-        if value:
-            header = key.replace("_", " ").title()
-            parts.append(f"=== {header} ===\n{value}\n")
-    
-    return "\n".join(parts) if parts else "No evidence provided."
+    for field_name, text_val in dict_payload.items():
+        if text_val and text_val.strip():
+            header_title = field_name.replace("_", " ").title()
+            blocks.append(f"=== {header_title} ===\n{text_val.strip()}\n")
+            
+    return "\n".join(blocks) if blocks else "No evidence provided."

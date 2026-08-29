@@ -7,7 +7,7 @@
 ### Next-Gen Cisco Network Intelligence & AI Diagnostic Engine
 
 <p>
-  Automated Cisco Packet Tracer fault diagnostics, telemetry analysis, deterministic rule verification, and human-in-the-loop audit streaming powered by <b>Python 3.11+</b>, <b>FastAPI</b>, and <b>LLMs</b>.
+  Automated Cisco Packet Tracer fault diagnostics, telemetry analysis, deterministic rule verification, dynamic risk scoring, and human-in-the-loop audit streaming powered by <b>Python 3.11+</b>, <b>FastAPI</b>, and <b>LLMs</b>.
 </p>
 
 <p>
@@ -35,7 +35,7 @@
 
 ---
 
-> **NetPulse AI** is a state-of-the-art diagnostic workbench built for network engineers. It analyzes CLI outputs, ping results, interface configs, and trunking logs to deliver instant root-cause identification, Cisco IOS remediation commands, risk scoring, and impact radius calculations.
+> **NetPulse AI** is a state-of-the-art diagnostic workbench built for network engineers. It analyzes CLI outputs, ping results, interface configs, trunking logs, OSPF adjacency states, and port-security violations to deliver instant root-cause identification, Cisco IOS remediation commands, risk scoring, and blast radius calculations.
 
 ---
 
@@ -60,7 +60,7 @@ python main.py        # Server running at http://localhost:8000
 python main_cli.py
 
 # 6. Run automated test suite
-$env:PYTHONPATH="."; pytest tests/ -v
+venv\Scripts\python.exe -m pytest tests/ -v
 ```
 
 ---
@@ -73,7 +73,7 @@ NetPulse-AI/
 │   ├── main.py                 # FastAPI Web Server (port 8000)
 │   ├── main_cli.py             # Telemetry CLI Terminal Mode
 │   ├── requirements.txt
-│   ├── data/                   # 30 Cisco Packet Tracer Scenarios & Log Storage
+│   ├── data/                   # 32 Cisco Packet Tracer Scenarios & Log Storage
 │   ├── docs/                   # Full Technical & Architectural Specs
 │   ├── scripts/                # Integration & Validation Scripts
 │   ├── src/                    # Telemetry Core Modules
@@ -81,10 +81,10 @@ NetPulse-AI/
 │   │   ├── models.py           # Case, DiagnosisResult, Risk Score Pydantic Schemas
 │   │   ├── data_loader.py      # Telemetry Dataset Reader
 │   │   ├── evidence_parser.py  # CLI & Output Log Parser
-│   │   ├── rule_checker.py    # 10 Phase-1 Deterministic Rule Validators
-│   │   ├── diagnosis.py       # AI Reasoning Engine & Risk Calculator
+│   │   ├── rule_checker.py     # 10 Phase-1 Deterministic Rule Validators
+│   │   ├── diagnosis.py        # AI Reasoning Engine & Risk Calculator
 │   │   ├── llm_client.py       # OpenRouter & Fallback LLM Connectors
-│   │   ├── human_review.py    # Engineer Verification Logger
+│   │   ├── human_review.py     # Engineer Verification Logger
 │   │   └── dashboard.py        # Telemetry Analytics & Metrics
 │   └── tests/                  # Pytest Unit & Integration Tests
 ├── frontend/                   # Dark Cybernetic UI System
@@ -106,9 +106,9 @@ NetPulse-AI/
 
 | Capability | Technical Description |
 |------------|-----------------------|
-| **30 Cisco Fault Models** | Covers Layer 2/3 IP Subnetting, 802.1Q Trunking, Inter-VLAN Routing, DHCP, OSPF/EIGRP, ACL, NAT, and WLC |
+| **32 Cisco Fault Models** | Covers Layer 2/3 IP Subnetting, 802.1Q Trunking, Inter-VLAN Routing, DHCP, OSPF Dead Timers, Port Security, ACL, NAT, and WLC |
 | **Phase-1 Rule Engine** | 10 deterministic checks run automatically to catch static IP/VLAN/Gateway misconfigurations prior to LLM inference |
-| **Multi-Stage AI Pipeline** | Telemetry parsing → Rule verification → Vector keyword filtering → LLM reasoning → Structured JSON payload |
+| **Multi-Stage AI Pipeline** | Telemetry parsing → Rule verification → Concept filtering → LLM reasoning → Enforced JSON payload |
 | **Risk & Impact Calculator** | Dynamically calculates incident risk score (0-100) and blast radius scope (Local Host, VLAN Scope, Router Subnet) |
 | **Human-in-the-Loop Audit** | Formally logs engineer verification (*Accepted*, *Edited*, or *Rejected*) into `human_review_log.md` |
 | **Cyber Glassmorphic UI** | Premium dark-mode dashboard with real-time websocket broadcast, live status badges, and Chart.js telemetry |
@@ -127,7 +127,7 @@ NetPulse-AI/
 | `/api/health` | GET | Engine Status & Diagnostic Model Telemetry |
 | `/api/system/metrics` | GET | Real-Time System Metrics & Latency |
 | `/api/cases/search` | GET | Multi-Parameter Query (Q, Concept, Severity, OSI) |
-| `/api/cases` | GET | Retrieve List of 30 Pre-Configured Scenarios |
+| `/api/cases` | GET | Retrieve List of 32 Pre-Configured Scenarios |
 | `/api/cases/{id}` | GET | Fetch Specific Case Details & Telemetry Logs |
 | `/api/diagnose` | POST | Execute Phase-1 Rules & AI Root-Cause Analysis |
 | `/api/rule-check` | POST | Run Standalone Deterministic Checks |
@@ -162,9 +162,9 @@ interface FastEthernet0/1
 
 ## 🛡️ Responsible AI & Verification Workflow
 
-1. Every diagnostic result includes a **Confidence Score** and **Impact Assessment**.
+1. Every diagnostic result includes a **Confidence Score**, **Risk Score**, and **Impact Assessment**.
 2. Network engineers audit each diagnosis using the **Human Verification Form**.
-3. Corrections update system precision metrics and persist to the persistent audit log.
+3. Corrections update system precision metrics and persist to the audit log.
 
 ---
 

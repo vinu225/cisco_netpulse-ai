@@ -295,8 +295,8 @@ function renderCasesTable(cases) {
         .map(c => `
             <tr>
                 <td class="fw-bold font-monospace text-cyan">#${c.case_id}</td>
-                <td class="fw-semibold text-white">${NetSage.escapeHtml(c.title)}</td>
-                <td class="small text-muted">${NetSage.escapeHtml(c.concept)}</td>
+                <td class="fw-semibold text-white">${NetPulse.escapeHtml(c.title)}</td>
+                <td class="small text-muted">${NetPulse.escapeHtml(c.concept)}</td>
                 <td><span class="badge badge-cyber ${c.severity === 'High' ? 'badge-high' : c.severity === 'Medium' ? 'badge-medium' : 'badge-low'}">${c.severity}</span></td>
                 <td class="font-monospace small text-muted">${c.osi_layer}</td>
                 <td>
@@ -336,10 +336,10 @@ function renderCorrectedCases(corrected) {
                 <strong class="text-white">Case #${c.case_id}</strong>
                 <span class="badge ${c.decision === 'Edited' ? 'bg-warning text-dark' : 'bg-danger text-white'}">${c.decision}</span>
             </div>
-            <div class="small text-muted">${NetSage.escapeHtml(c.title)}</div>
+            <div class="small text-muted">${NetPulse.escapeHtml(c.title)}</div>
             <div class="small mt-2 font-monospace p-2 rounded" style="background: rgba(0,0,0,0.3);">
-                <div class="text-muted">AI: ${NetSage.escapeHtml(c.ai_fault)}</div>
-                <div class="text-warning fw-bold mt-1">Engineer: ${NetSage.escapeHtml(c.corrected_fault || '—')}</div>
+                <div class="text-muted">AI: ${NetPulse.escapeHtml(c.ai_fault)}</div>
+                <div class="text-warning fw-bold mt-1">Engineer: ${NetPulse.escapeHtml(c.corrected_fault || '—')}</div>
             </div>
         </div>
     `).join('');

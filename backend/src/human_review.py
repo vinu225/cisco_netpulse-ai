@@ -27,10 +27,10 @@ class HumanReview:
     def _ensure_log_exists(self):
         """Create log file with header if it doesn't exist."""
         if not self.log_file.exists():
-            header = f"""# Human Review Log - NetSage AI
+            header = f"""# Human Review Log - NetPulse AI
 
 **Project:** Cisco Network Troubleshooting AI  
-**Created:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}  
+**Created:** {datetime.now().strftime('%d-%m-%Y %H:%M:%S')}  
 **Purpose:** Track AI diagnoses that were corrected by human reviewers
 
 ---

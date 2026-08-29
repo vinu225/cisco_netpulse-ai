@@ -1,15 +1,24 @@
-import pandas as pd
+"""Standalone CSV dataset inspector script for NetPulse AI Engine."""
 
-df = pd.read_csv('cases.csv')
-print('Shape:', df.shape)
-print('Columns:', list(df.columns))
-print('Case IDs:', df.iloc[:,0].tolist())
-print('Unique case_ids:', df.iloc[:,0].nunique())
-print('Missing titles:', df['title'].isna().sum())
-print('Missing expected_fault:', df['expected_fault'].isna().sum())
-print('Missing concept:', df['concept'].isna().sum())
-print('Missing severity:', df['severity'].isna().sum())
-print()
-print('All cases:')
-for _, row in df.iterrows():
-    print(f'  {row.iloc[0]}: {row["title"]} | {row["concept"]} | {row["severity"]}')
+import sys
+from pathlib import Path
+
+# Add backend root to sys.path
+backend_dir = Path(__file__).resolve().parent.parent
+if str(backend_dir) not in sys.path:
+    sys.path.insert(0, str(backend_dir))
+
+from src.config import CASES_CSV
+from src.data_loader import validate_dataset, print_validation_report
+
+def main():
+    print(f"Inspecting target CSV file: {CASES_CSV}")
+    if not CASES_CSV.exists():
+        print("Error: Target dataset file does not exist!")
+        return
+
+    report = validate_dataset()
+    print_validation_report(report)
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,31 @@
+[user_description]
+PC1 (10.1.1.10) cannot ping PC2 (10.2.2.10). Router1 and Router2 are connected over serial interface s0/0/0 using OSPF.
+
+[ping_results]
+Pinging 10.2.2.10 with 32 bytes of data:
+Request timed out (100% loss).
+
+[ipconfig]
+IPv4 Address: 10.1.1.10
+Subnet Mask: 255.255.255.0
+Default Gateway: 10.1.1.1
+
+[show_ip_route]
+Router1# show ip route
+Codes: C - connected, S - static, O - OSPF
+C 10.1.1.0/24 is directly connected, GigabitEthernet0/0
+C 10.255.0.0/30 is directly connected, Serial0/0/0
+(No OSPF routes learned)
+
+[other_cli_output]
+Router1# show ip ospf interface serial 0/0/0
+Serial0/0/0 is up, line protocol is up
+  Internet Address 10.255.0.1/30, Area 0
+  Process ID 1, Router ID 1.1.1.1
+  Timer intervals configured, Hello 10, Dead 40, Wait 40, Retransmit 5
+
+Router2# show ip ospf interface serial 0/0/0
+Serial0/0/0 is up, line protocol is up
+  Internet Address 10.255.0.2/30, Area 0
+  Process ID 1, Router ID 2.2.2.2
+  Timer intervals configured, Hello 10, Dead 30, Wait 30, Retransmit 5

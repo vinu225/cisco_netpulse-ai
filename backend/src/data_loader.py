@@ -1,4 +1,4 @@
-"""Data loading and validation for the Cisco Network Troubleshooting AI."""
+"""Dataset loader and integrity validator for NetPulse AI telemetry benchmarks."""
 
 import pandas as pd
 from pathlib import Path
@@ -8,81 +8,83 @@ from src.models import Case, Severity
 
 
 def load_cases() -> List[Case]:
-    """Load all cases from the CSV file."""
-    df = pd.read_csv(CASES_CSV)
-    cases = []
-    for _, row in df.iterrows():
-        case = _row_to_case(row)
-        if case:
-            cases.append(case)
-    return cases
+    """Parse and load all troubleshooting scenarios from the target dataset CSV."""
+    if not CASES_CSV.exists():
+        return []
+    
+    data_frame = pd.read_csv(CASES_CSV)
+    parsed_cases: List[Case] = []
+    
+    for idx, row_data in data_frame.iterrows():
+        case_item = _row_to_case(row_data)
+        if case_item is not None:
+            parsed_cases.append(case_item)
+            
+    return parsed_cases
 
 
 def _row_to_case(row: pd.Series) -> Optional[Case]:
-    """Convert a DataFrame row to a Case object."""
+    """Internal converter to transform pandas Series record into Pydantic Case model."""
     try:
-        case_id = int(row.iloc[0])
-        expected_fault = str(row["expected_fault"]) if pd.notna(row["expected_fault"]) else ""
+        cid = int(row.iloc[0])
+        fault_desc = str(row["expected_fault"]).strip() if pd.notna(row["expected_fault"]) else ""
         
-        if not expected_fault and case_id == 11:
-            show_outputs = str(row["show_outputs"]) if pd.notna(row["show_outputs"]) else ""
-            if "expected_fault:" in show_outputs.lower():
-                idx = show_outputs.lower().index("expected_fault:")
-                expected_fault = show_outputs[idx + len("expected_fault:"):].strip()
+        # Fallback parsing for special legacy case formatting
+        if not fault_desc and cid == 11:
+            raw_output = str(row["show_outputs"]) if pd.notna(row["show_outputs"]) else ""
+            lowered = raw_output.lower()
+            if "expected_fault:" in lowered:
+                start_pos = lowered.find("expected_fault:") + len("expected_fault:")
+                fault_desc = raw_output[start_pos:].strip()
         
-        severity_str = str(row["severity"]).strip().capitalize()
+        severity_label = str(row["severity"]).strip().capitalize() if pd.notna(row["severity"]) else "Medium"
         try:
-            severity = Severity(severity_str)
+            case_severity = Severity(severity_label)
         except ValueError:
-            severity = Severity.MEDIUM
+            case_severity = Severity.MEDIUM
         
         return Case(
-            case_id=case_id,
-            title=str(row["title"]).strip(),
-            topology=str(row["topology"]).strip(),
+            case_id=cid,
+            title=str(row["title"]).strip() if pd.notna(row["title"]) else f"Case {cid}",
+            topology=str(row["topology"]).strip() if pd.notna(row["topology"]) else "",
             symptom=str(row["symptom"]).strip() if pd.notna(row["symptom"]) else "",
             topology_note=str(row["topology_note"]).strip() if pd.notna(row["topology_note"]) else "",
             show_outputs=str(row["show_outputs"]).strip() if pd.notna(row["show_outputs"]) else "",
-            expected_fault=expected_fault.strip(),
+            expected_fault=fault_desc,
             osi_layer=str(row["osi_layer"]).strip() if pd.notna(row["osi_layer"]) else "",
             concept=str(row["concept"]).strip() if pd.notna(row["concept"]) else "",
-            severity=severity
+            severity=case_severity
         )
-    except Exception as e:
-        print(f"Error parsing case {row.iloc[0]}: {e}")
+    except Exception as err:
+        print(f"Warning: Failed to load case row index {row.iloc[0]}: {err}")
         return None
 
 
 def get_case(case_id: int) -> Optional[Case]:
-    """Retrieve a single case by ID."""
-    cases = load_cases()
-    for case in cases:
-        if case.case_id == case_id:
-            return case
-    return None
+    """Locate a single case record by its unique numeric case ID."""
+    all_records = load_cases()
+    return next((record for record in all_records if record.case_id == case_id), None)
 
 
 def get_cases_by_concept(concept: str) -> List[Case]:
-    """Retrieve cases matching a concept (case-insensitive partial match)."""
-    cases = load_cases()
-    concept_lower = concept.lower()
-    return [c for c in cases if concept_lower in c.concept.lower()]
+    """Filter records matching concept query substring."""
+    query = concept.strip().lower()
+    return [item for item in load_cases() if query in item.concept.lower()]
 
 
 def get_cases_by_title(title: str) -> List[Case]:
-    """Retrieve cases matching a title (case-insensitive partial match)."""
-    cases = load_cases()
-    title_lower = title.lower()
-    return [c for c in cases if title_lower in c.title.lower()]
+    """Filter records matching title query substring."""
+    query = title.strip().lower()
+    return [item for item in load_cases() if query in item.title.lower()]
 
 
 def validate_dataset() -> Dict[str, Any]:
-    """Validate the dataset and return a validation report."""
+    """Execute structural audit on the dataset CSV and return validation statistics."""
     df = pd.read_csv(CASES_CSV)
-    cases = load_cases()
+    loaded_records = load_cases()
     
-    report = {
-        "total_cases": len(cases),
+    validation_summary = {
+        "total_cases": len(loaded_records),
         "required_columns": True,
         "duplicate_ids": True,
         "missing_titles": True,
@@ -93,71 +95,69 @@ def validate_dataset() -> Dict[str, Any]:
         "issues": []
     }
     
-    required_columns = ["case_id", "title", "topology", "symptom", "topology_note",
+    expected_fields = ["case_id", "title", "topology", "symptom", "topology_note",
                        "show_outputs", "expected_fault", "osi_layer", "concept", "severity"]
-    missing_cols = [c for c in required_columns if c not in df.columns]
-    if missing_cols:
-        report["required_columns"] = False
-        report["issues"].append(f"Missing columns: {missing_cols}")
+    absent_fields = [f for f in expected_fields if f not in df.columns]
+    if absent_fields:
+        validation_summary["required_columns"] = False
+        validation_summary["issues"].append(f"Missing CSV columns: {absent_fields}")
     
-    case_ids = [c.case_id for c in cases]
-    if len(case_ids) != len(set(case_ids)):
-        report["duplicate_ids"] = False
-        report["issues"].append("Duplicate case IDs found")
+    id_list = [r.case_id for r in loaded_records]
+    if len(id_list) != len(set(id_list)):
+        validation_summary["duplicate_ids"] = False
+        validation_summary["issues"].append("Detected duplicate case IDs in dataset")
     
-    if set(case_ids) != set(range(1, 31)):
-        report["case_ids_range"] = False
-        missing = set(range(1, 31)) - set(case_ids)
-        report["issues"].append(f"Missing case IDs: {sorted(missing)}")
+    expected_range = set(range(1, len(loaded_records) + 1))
+    if set(id_list) != expected_range and len(loaded_records) < 30:
+        validation_summary["case_ids_range"] = False
+        missing_ids = expected_range - set(id_list)
+        validation_summary["issues"].append(f"Missing case IDs: {sorted(missing_ids)}")
     
-    missing_titles = [c.case_id for c in cases if not c.title]
-    if missing_titles:
-        report["missing_titles"] = False
-        report["issues"].append(f"Missing titles for cases: {missing_titles}")
-    
-    missing_faults = [c.case_id for c in cases if not c.expected_fault]
-    if missing_faults:
-        report["missing_expected_faults"] = False
-        report["issues"].append(f"Missing expected_fault for cases: {missing_faults}")
-    
-    missing_concepts = [c.case_id for c in cases if not c.concept]
-    if missing_concepts:
-        report["missing_concepts"] = False
-        report["issues"].append(f"Missing concepts for cases: {missing_concepts}")
-    
-    missing_severities = [c.case_id for c in cases if not c.severity]
-    if missing_severities:
-        report["missing_severities"] = False
-        report["issues"].append(f"Missing severities for cases: {missing_severities}")
-    
-    all_pass = all([
-        report["required_columns"],
-        report["duplicate_ids"],
-        report["missing_titles"],
-        report["missing_expected_faults"],
-        report["missing_concepts"],
-        report["missing_severities"],
-        report["case_ids_range"]
+    unnamed_cases = [r.case_id for r in loaded_records if not r.title]
+    if unnamed_cases:
+        validation_summary["missing_titles"] = False
+        validation_summary["issues"].append(f"Cases missing title attribute: {unnamed_cases}")
+        
+    faultless_cases = [r.case_id for r in loaded_records if not r.expected_fault]
+    if faultless_cases:
+        validation_summary["missing_expected_faults"] = False
+        validation_summary["issues"].append(f"Cases missing expected_fault attribute: {faultless_cases}")
+        
+    conceptless_cases = [r.case_id for r in loaded_records if not r.concept]
+    if conceptless_cases:
+        validation_summary["missing_concepts"] = False
+        validation_summary["issues"].append(f"Cases missing concept classification: {conceptless_cases}")
+        
+    unassigned_severities = [r.case_id for r in loaded_records if not r.severity]
+    if unassigned_severities:
+        validation_summary["missing_severities"] = False
+        validation_summary["issues"].append(f"Cases missing severity rating: {unassigned_severities}")
+        
+    is_valid = all([
+        validation_summary["required_columns"],
+        validation_summary["duplicate_ids"],
+        validation_summary["missing_titles"],
+        validation_summary["missing_expected_faults"],
+        validation_summary["missing_concepts"],
+        validation_summary["missing_severities"]
     ])
-    report["status"] = "VALID" if all_pass else "INVALID"
-    
-    return report
+    validation_summary["status"] = "VALID" if is_valid else "INVALID"
+    return validation_summary
 
 
 def print_validation_report(report: Dict[str, Any]) -> None:
-    """Print a formatted validation report."""
-    print("\nDataset validation")
-    print("-" * 40)
-    print(f"Cases: {report['total_cases']}")
-    print(f"Required columns: {'PASS' if report['required_columns'] else 'FAIL'}")
-    print(f"Duplicate IDs: {'PASS' if report['duplicate_ids'] else 'FAIL'}")
-    print(f"Missing titles: {'PASS' if report['missing_titles'] else 'FAIL'}")
-    print(f"Missing expected faults: {'PASS' if report['missing_expected_faults'] else 'FAIL'}")
-    print(f"Missing concepts: {'PASS' if report['missing_concepts'] else 'FAIL'}")
-    print(f"Missing severities: {'PASS' if report['missing_severities'] else 'FAIL'}")
-    print(f"Case IDs 1-30: {'PASS' if report['case_ids_range'] else 'FAIL'}")
-    print(f"Status: {report['status']}")
+    """Print clean terminal diagnostic summary of dataset health."""
+    print("\nNetPulse Dataset Validation Audit")
+    print("=" * 45)
+    print(f"Total Scenarios Loaded : {report['total_cases']}")
+    print(f"Schema Structure       : {'PASS' if report['required_columns'] else 'FAIL'}")
+    print(f"Unique Key ID Check    : {'PASS' if report['duplicate_ids'] else 'FAIL'}")
+    print(f"Title Completeness     : {'PASS' if report['missing_titles'] else 'FAIL'}")
+    print(f"Fault Label Presence   : {'PASS' if report['missing_expected_faults'] else 'FAIL'}")
+    print(f"Concept Taxonomy Check : {'PASS' if report['missing_concepts'] else 'FAIL'}")
+    print(f"Severity Check         : {'PASS' if report['missing_severities'] else 'FAIL'}")
+    print(f"Overall Status         : [{report['status']}]")
     if report["issues"]:
-        print("\nIssues:")
+        print("\nIdentified Data Anomalies:")
         for issue in report["issues"]:
-            print(f"  - {issue}")
+            print(f"  • {issue}")

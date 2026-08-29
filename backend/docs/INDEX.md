@@ -1,7 +1,7 @@
-# NetSage AI - Documentation Hub
+# NetPulse AI - Documentation Hub
 
 ## Overview
-Complete documentation for the NetSage AI - Cisco Network Troubleshooting Assistant.
+Complete documentation for the NetPulse AI - Cisco Network Troubleshooting & Intelligence Platform.
 
 ---
 

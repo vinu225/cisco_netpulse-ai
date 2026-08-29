@@ -1,70 +1,67 @@
-"""Prompt templates for the Cisco Network Troubleshooting AI."""
+"""Prompt engineering templates for NetPulse AI Telemetry & Diagnostic Engine."""
 
 from typing import List
 from src.models import Case, Evidence
 
 
-SYSTEM_PROMPT = """You are a Cisco Network Troubleshooting Assistant. Your job is to analyze network troubleshooting evidence and identify which of the 30 known fault categories is present.
+SYSTEM_PROMPT = """You are NetPulse AI, an expert Cisco Network Diagnostics System. Your purpose is to analyze telemetry logs, CLI interface outputs, and ping diagnostic reports to identify the exact fault category.
 
-RULES:
-1. Analyze ONLY the provided evidence. Do not assume configurations not shown.
-2. Match the fault to ONE of the 30 known cases provided.
-3. Explain your diagnosis briefly, citing specific evidence.
-4. Give a confidence score from 0.0 to 1.0.
-5. Provide a practical Cisco fix with CLI commands when possible.
-6. NEVER invent CLI output. NEVER claim a configuration exists unless evidence shows it.
-7. If evidence is insufficient to distinguish between cases, set needs_more_evidence=true.
-8. Do not guess just to produce an answer.
+CORE DIAGNOSTIC RULES:
+1. Base your reasoning STRICTLY on the supplied evidence. Do not hallucinate unverified state.
+2. Match the symptoms against ONE of the known fault scenarios listed.
+3. Provide a concise technical explanation citing specific log artifacts.
+4. Calculate an objective confidence metric between 0.00 and 1.00.
+5. Detail actionable Cisco IOS remediation commands required to resolve the issue.
+6. If evidence is ambiguous or incomplete, set needs_more_evidence=true.
 
-OUTPUT FORMAT (JSON only):
+REQUIRED JSON OUTPUT FORMAT (Strict JSON only, no markdown wrappers):
 {
-  "predicted_fault": "Case title from the known cases",
+  "predicted_fault": "Title of predicted fault scenario",
   "confidence": 0.95,
-  "reasoning_summary": "Brief explanation citing specific evidence",
-  "evidence_used": ["evidence1", "evidence2"],
-  "recommended_fix": "Description of the fix",
-  "commands": ["enable", "configure terminal", "..."],
+  "reasoning_summary": "Detailed technical analysis citing specific CLI parameters",
+  "evidence_used": ["Evidence log snippet 1", "Evidence log snippet 2"],
+  "recommended_fix": "Clear step-by-step remediation procedure",
+  "commands": ["configure terminal", "interface GigabitEthernet0/1", "no shutdown"],
   "needs_more_evidence": false
 }"""
 
 
 def build_case_list_prompt(cases: List[Case]) -> str:
-    """Build a formatted list of candidate cases for the prompt."""
-    lines = []
-    for case in cases:
-        lines.append(f"Case {case.case_id}: {case.title}")
-        lines.append(f"  Expected Fault: {case.expected_fault}")
-        lines.append(f"  Concept: {case.concept}")
-        lines.append(f"  Severity: {case.severity}")
-        lines.append("")
-    return "\n".join(lines)
+    """Format candidate cases into structured prompt reference block."""
+    prompt_lines = []
+    for item in cases:
+        prompt_lines.append(f"Case #{item.case_id}: {item.title}")
+        prompt_lines.append(f"  Fault Profile : {item.expected_fault}")
+        prompt_lines.append(f"  Networking Concept : {item.concept}")
+        prompt_lines.append(f"  Severity Impact    : {item.severity}")
+        prompt_lines.append("")
+    return "\n".join(prompt_lines)
 
 
 def build_diagnosis_prompt(evidence: Evidence, candidate_cases: List[Case]) -> str:
-    """Build the complete diagnosis prompt for the LLM."""
-    evidence_str = ""
-    evidence_dict = evidence.to_dict()
+    """Assemble complete user diagnostic prompt payload for LLM inference."""
+    raw_dict = evidence.to_dict()
     
-    if evidence_dict:
-        evidence_lines = ["TROUBLESHOOTING EVIDENCE:"]
-        for key, value in evidence_dict.items():
-            header = key.replace("_", " ").title()
-            evidence_lines.append(f"\n=== {header} ===")
-            evidence_lines.append(value)
-        evidence_str = "\n".join(evidence_lines)
+    if raw_dict:
+        sections = ["NETPULSE TELEMETRY EVIDENCE:"]
+        for attr_key, attr_val in raw_dict.items():
+            formatted_title = attr_key.replace("_", " ").upper()
+            sections.append(f"\n[=== {formatted_title} ===]")
+            sections.append(attr_val.strip())
+        telemetry_block = "\n".join(sections)
     else:
-        evidence_str = "TROUBLESHOOTING EVIDENCE:\nNo evidence provided."
+        telemetry_block = "NETPULSE TELEMETRY EVIDENCE:\nNo telemetry logs provided."
     
-    cases_str = build_case_list_prompt(candidate_cases)
+    candidate_block = build_case_list_prompt(candidate_cases)
     
-    return f"""{evidence_str}
+    return f"""{telemetry_block}
 
-KNOWN FAULT CATEGORIES (match to ONE):
-{cases_str}
+CANDIDATE NETWORK FAULT MATRIX:
+{candidate_block}
 
-Analyze the evidence and identify the most likely fault. Return ONLY the JSON response.""" 
+Evaluate the telemetry logs above against the candidate matrix. Return ONLY the formatted JSON response."""
 
 
 def build_evaluation_prompt(evidence: Evidence, candidate_cases: List[Case]) -> str:
-    """Build prompt for evaluation mode (same as diagnosis)."""
+    """Construct evaluation prompt payload."""
     return build_diagnosis_prompt(evidence, candidate_cases)

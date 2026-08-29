@@ -203,7 +203,7 @@ async function viewCase(caseId) {
                 Object.entries(data.evidence).forEach(([key, value]) => {
                     if (value && value.trim()) {
                         const titleKey = key.replace(/_/g, ' ').toUpperCase();
-                        evidenceHtml += '<div class="mb-3"><h6 class="text-cyan small font-monospace">' + titleKey + '</h6><pre class="code-console" style="max-height: 180px; overflow: auto;">' + NetSage.escapeHtml(value) + '</pre></div>';
+                        evidenceHtml += '<div class="mb-3"><h6 class="text-cyan small font-monospace">' + titleKey + '</h6><pre class="code-console" style="max-height: 180px; overflow: auto;">' + NetPulse.escapeHtml(value) + '</pre></div>';
                     }
                 });
             }
@@ -211,15 +211,15 @@ async function viewCase(caseId) {
             const badgeClass = data.case.severity === 'High' ? 'badge-high' : data.case.severity === 'Medium' ? 'badge-medium' : 'badge-low';
             
             let bodyContent = '<div class="row g-3 mb-4">' +
-                '<div class="col-md-6"><span class="text-muted small">Concept:</span> <div class="fw-bold text-white">' + NetSage.escapeHtml(data.case.concept) + '</div></div>' +
+                '<div class="col-md-6"><span class="text-muted small">Concept:</span> <div class="fw-bold text-white">' + NetPulse.escapeHtml(data.case.concept) + '</div></div>' +
                 '<div class="col-md-6"><span class="text-muted small">Severity:</span> <div><span class="badge badge-cyber ' + badgeClass + '">' + data.case.severity + '</span></div></div>' +
-                '<div class="col-md-6"><span class="text-muted small">OSI Layer:</span> <div class="fw-bold font-monospace text-cyan">' + NetSage.escapeHtml(data.case.osi_layer) + '</div></div>' +
-                '<div class="col-md-6"><span class="text-muted small">Expected Fault:</span> <div class="fw-bold text-warning">' + NetSage.escapeHtml(data.case.expected_fault) + '</div></div>' +
+                '<div class="col-md-6"><span class="text-muted small">OSI Layer:</span> <div class="fw-bold font-monospace text-cyan">' + NetPulse.escapeHtml(data.case.osi_layer) + '</div></div>' +
+                '<div class="col-md-6"><span class="text-muted small">Expected Fault:</span> <div class="fw-bold text-warning">' + NetPulse.escapeHtml(data.case.expected_fault) + '</div></div>' +
                 '</div>' +
                 '<hr class="border-secondary border-opacity-25">' +
-                '<h6 class="text-white fw-bold">Topology Overview</h6><p class="small text-muted">' + NetSage.escapeHtml(data.case.topology) + '</p>' +
-                '<h6 class="text-white fw-bold">Symptom Description</h6><p class="small text-muted">' + NetSage.escapeHtml(data.case.symptom) + '</p>' +
-                '<h6 class="text-white fw-bold">Topology Notes</h6><p class="small text-muted">' + NetSage.escapeHtml(data.case.topology_note) + '</p>';
+                '<h6 class="text-white fw-bold">Topology Overview</h6><p class="small text-muted">' + NetPulse.escapeHtml(data.case.topology) + '</p>' +
+                '<h6 class="text-white fw-bold">Symptom Description</h6><p class="small text-muted">' + NetPulse.escapeHtml(data.case.symptom) + '</p>' +
+                '<h6 class="text-white fw-bold">Topology Notes</h6><p class="small text-muted">' + NetPulse.escapeHtml(data.case.topology_note) + '</p>';
             
             if (evidenceHtml) {
                 bodyContent += '<hr class="border-secondary border-opacity-25"><h6 class="text-white fw-bold mb-3">Pre-Configured Evidence Logs</h6>' + evidenceHtml;
@@ -260,7 +260,7 @@ async function runRuleCheck(caseId) {
                 const alertClass = r.severity === 'HIGH' ? 'bg-danger bg-opacity-15 border-danger text-danger' : 'bg-warning bg-opacity-15 border-warning text-warning';
                 html += '<div class="alert ' + alertClass + ' border p-3 rounded mb-2">' +
                     '<strong class="font-monospace">[' + r.severity + '] ' + r.check.replace(/_/g, ' ').toUpperCase() + '</strong>' +
-                    '<div class="small mt-1 text-light">' + NetSage.escapeHtml(r.message) + '</div>' +
+                    '<div class="small mt-1 text-light">' + NetPulse.escapeHtml(r.message) + '</div>' +
                     '</div>';
             });
             document.getElementById('ruleCheckModalBody').innerHTML = html;

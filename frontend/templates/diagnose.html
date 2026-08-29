@@ -212,10 +212,10 @@ async function loadEvidenceFile() {
         const data = await response.json();
         if (data.evidence_raw) {
             document.getElementById('evidence-text').value = data.evidence_raw;
-            NetSage.toast('Telemetry evidence loaded successfully');
+            NetPulse.toast('Telemetry evidence loaded successfully');
         }
     } catch (e) {
-        NetSage.toast('Failed to load telemetry evidence file', 'error');
+        NetPulse.toast('Failed to load telemetry evidence file', 'error');
     }
 }
 
@@ -227,7 +227,7 @@ function loadSampleEvidence(type) {
     };
     if (samples[type]) {
         document.getElementById('evidence-text').value = samples[type];
-        NetSage.toast(`Loaded preset evidence: ${type.toUpperCase()}`);
+        NetPulse.toast(`Loaded preset evidence: ${type.toUpperCase()}`);
     }
 }
 
@@ -244,9 +244,9 @@ document.getElementById('diagnose-form').addEventListener('submit', async (e) =>
         if (placeholderText && placeholderText.trim()) {
             document.getElementById('evidence-text').value = placeholderText;
             evidenceText = placeholderText;
-            NetSage.toast('Loaded sample telemetry from template');
+            NetPulse.toast('Loaded sample telemetry from template');
         } else {
-            NetSage.toast('Please provide network telemetry or CLI evidence', 'error');
+            NetPulse.toast('Please provide network telemetry or CLI evidence', 'error');
             return;
         }
     }
@@ -275,12 +275,12 @@ document.getElementById('diagnose-form').addEventListener('submit', async (e) =>
                 document.getElementById('review-case-id').value = caseId;
             }
             
-            NetSage.toast('Diagnostic evaluation complete');
+            NetPulse.toast('Diagnostic evaluation complete');
         } else {
-            NetSage.toast(data.detail || 'Diagnosis failed', 'error');
+            NetPulse.toast(data.detail || 'Diagnosis failed', 'error');
         }
     } catch (error) {
-        NetSage.toast('Error: ' + error.message, 'error');
+        NetPulse.toast('Error: ' + error.message, 'error');
     } finally {
         btn.disabled = false;
         btn.innerHTML = '<i class="bi bi-play-circle-fill fs-5 me-2"></i>Run AI Diagnosis';
@@ -330,7 +330,7 @@ function displayDiagnosis(diagnosis, formatted) {
             <div class="col-md-5">
                 <div class="p-3 rounded" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color);">
                     <div class="text-muted small font-monospace text-uppercase mb-1">Predicted Fault Category</div>
-                    <div class="fw-bold fs-5 text-cyan">${NetSage.escapeHtml(diagnosis.predicted_fault)}</div>
+                    <div class="fw-bold fs-5 text-cyan">${NetPulse.escapeHtml(diagnosis.predicted_fault)}</div>
                 </div>
             </div>
             <div class="col-md-3">
@@ -342,7 +342,7 @@ function displayDiagnosis(diagnosis, formatted) {
             <div class="col-md-4">
                 <div class="p-3 rounded" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color);">
                     <div class="text-muted small font-monospace text-uppercase mb-1">Impact Radius & Risk</div>
-                    <div class="fw-bold fs-5 text-warning">${NetSage.escapeHtml(diagnosis.impact_radius || 'Subnet Scope')} (${diagnosis.risk_score || 45} Risk)</div>
+                    <div class="fw-bold fs-5 text-warning">${NetPulse.escapeHtml(diagnosis.impact_radius || 'Subnet Scope')} (${diagnosis.risk_score || 45} Risk)</div>
                 </div>
             </div>
         </div>
@@ -350,32 +350,32 @@ function displayDiagnosis(diagnosis, formatted) {
         <div class="mb-4">
             <h6 class="fw-bold text-white mb-2"><i class="bi bi-card-text text-cyan me-2"></i>Technical Reasoning & Analysis</h6>
             <div class="p-3 rounded text-light" style="background: rgba(15,23,42,0.6); border: 1px solid var(--border-color);">
-                ${NetSage.escapeHtml(diagnosis.reasoning_summary)}
+                ${NetPulse.escapeHtml(diagnosis.reasoning_summary)}
             </div>
         </div>
         
         <div class="mb-4">
             <h6 class="fw-bold text-white mb-2"><i class="bi bi-list-check text-cyan me-2"></i>Key Evidence Used</h6>
             <ul class="list-group list-group-flush rounded border-0">
-                ${diagnosis.evidence_used.map(ev => `<li class="list-group-item bg-transparent text-muted small border-secondary border-opacity-25"><i class="bi bi-caret-right-fill text-cyan me-2"></i>${NetSage.escapeHtml(ev)}</li>`).join('')}
+                ${diagnosis.evidence_used.map(ev => `<li class="list-group-item bg-transparent text-muted small border-secondary border-opacity-25"><i class="bi bi-caret-right-fill text-cyan me-2"></i>${NetPulse.escapeHtml(ev)}</li>`).join('')}
             </ul>
         </div>
         
         <div class="mb-4">
             <h6 class="fw-bold text-white mb-2"><i class="bi bi-wrench-adjustable text-success me-2"></i>Recommended Remediation Plan</h6>
             <div class="p-3 rounded text-emerald" style="background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2);">
-                ${NetSage.escapeHtml(diagnosis.recommended_fix)}
+                ${NetPulse.escapeHtml(diagnosis.recommended_fix)}
             </div>
         </div>
         
         <div class="mb-4">
             <div class="d-flex justify-content-between align-items-center mb-2">
                 <h6 class="fw-bold text-white mb-0"><i class="bi bi-terminal text-cyan me-2"></i>Cisco IOS CLI Fix Commands</h6>
-                <button type="button" class="btn btn-cyber-outline btn-sm" onclick="NetSage.copyToClipboard('${diagnosis.commands.join('\\n').replace(/'/g, "\\'")}')">
+                <button type="button" class="btn btn-cyber-outline btn-sm" onclick="NetPulse.copyToClipboard('${diagnosis.commands.join('\\n').replace(/'/g, "\\'")}')">
                     <i class="bi bi-copy me-1"></i> Copy Commands
                 </button>
             </div>
-            <pre class="code-console mb-0">${diagnosis.commands.map(NetSage.escapeHtml).join('\n')}</pre>
+            <pre class="code-console mb-0">${diagnosis.commands.map(NetPulse.escapeHtml).join('\n')}</pre>
         </div>
     `;
 }
@@ -393,7 +393,7 @@ document.getElementById('review-form').addEventListener('submit', async (e) => {
     const needsCorrection = decision === 'Edited' || decision === 'Rejected';
     
     if (needsCorrection && !document.getElementById('corrected-fault').value.trim()) {
-        NetSage.toast('Corrected fault title is required for Edited/Rejected verification', 'error');
+        NetPulse.toast('Corrected fault title is required for Edited/Rejected verification', 'error');
         return;
     }
     
@@ -419,14 +419,14 @@ document.getElementById('review-form').addEventListener('submit', async (e) => {
         });
         
         if (response.ok) {
-            NetSage.toast('Verification log saved successfully!');
+            NetPulse.toast('Verification log saved successfully!');
             document.getElementById('review-form').reset();
             document.getElementById('correction-fields').style.display = 'none';
         } else {
-            NetSage.toast('Failed to save verification log', 'error');
+            NetPulse.toast('Failed to save verification log', 'error');
         }
     } catch (error) {
-        NetSage.toast('Error: ' + error.message, 'error');
+        NetPulse.toast('Error: ' + error.message, 'error');
     }
 });
 
@@ -450,12 +450,12 @@ function clearForm() {
 
 function copyDiagnosis() {
     const text = document.getElementById('diagnosis-result').innerText;
-    NetSage.copyToClipboard(text);
+    NetPulse.copyToClipboard(text);
 }
 
 function downloadDiagnosis() {
     const text = document.getElementById('diagnosis-result').innerText;
-    NetSage.downloadText(text, 'NetPulse_AI_Diagnosis_Report.txt');
+    NetPulse.downloadText(text, 'NetPulse_AI_Diagnosis_Report.txt');
 }
 </script>
 {% endblock %}

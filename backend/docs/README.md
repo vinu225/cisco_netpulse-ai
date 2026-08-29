@@ -564,6 +564,6 @@ Educational project for Cisco networking + AI integration learning. Not for prod
 
 ---
 
-**Built for:** Applied AI + Network Troubleshooting (NetSage AI)  
+**Built for:** Applied AI + Network Troubleshooting (NetPulse AI)  
 **Team Size:** 2-3 students  
 **Safety Rule:** Human review required for every diagnosis

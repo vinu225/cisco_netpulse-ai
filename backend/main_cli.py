@@ -154,7 +154,7 @@ def main() -> None:
     """Main CLI loop."""
     setup_logging()
     
-    print("Cisco Network Troubleshooting AI - NetSage")
+    print("NetPulse AI - Cisco Network Telemetry & Diagnostic Console")
     print("Loading cases...")
     cases = load_cases()
     print(f"Loaded {len(cases)} cases")
